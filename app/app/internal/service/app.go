@@ -5,6 +5,9 @@ import (
 	"crypto/ecdsa"
 	"encoding/json"
 	"fmt"
+	sdk "github.com/BioforestChain/go-bfmeta-wallet-sdk"
+	"github.com/BioforestChain/go-bfmeta-wallet-sdk/entity/req/broadcastTra"
+	"github.com/BioforestChain/go-bfmeta-wallet-sdk/entity/req/createTransferAsset"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -2325,7 +2328,7 @@ func (a *AppService) AdminWithdrawBiw(ctx context.Context, req *v1.AdminWithdraw
 			break
 		}
 
-		if "dhb" != withdraw.Type {
+		if "NANA" != withdraw.Type {
 			continue
 		}
 
@@ -2390,256 +2393,50 @@ func (a *AppService) AdminWithdrawBiw(ctx context.Context, req *v1.AdminWithdraw
 			fmt.Println(res, msg, code, withdraw)
 			continue
 		}
-
-		//if "dhb" == withdraw.Type {
-		//	tokenAddress = "0x6504631df9F6FF397b0ec442FB80685a7B1688d4"
-		//} else
-
-		//if "usdt" == withdraw.Type {
-		//	//tokenAddress = "0x337610d27c682E347C9cD60BD4b3b107C9d34dDd"
-		//	tokenAddress = "0x55d398326f99059fF775485246999027B3197955"
-		//} else if "usdt_2" == withdraw.Type {
-		//	tokenAddress = "0x55d398326f99059fF775485246999027B3197955"
-		//} else {
-		//	continue
-		//}
-		//
-		//_, err = a.uuc.UpdateWithdrawDoing(ctx, withdraw.ID)
-		//if nil != err {
-		//	continue
-		//}
-		//
-		//withDrawAmount := strconv.FormatInt(withdraw.Amount, 10) + "0000000000000" // 补八个0.系统基础1是10个0
-		//tmpUrl1 := "https://bsc-dataseed4.binance.org/"
-		//for i := 0; i <= 5; i++ {
-		//	//fmt.Println(11111, user.ToAddress, v.Amount, balanceInt)
-		//	_, err = toToken("", users[withdraw.UserId].Address, withDrawAmount, tokenAddress, tmpUrl1)
-		//	if err == nil {
-		//		_, err = a.uuc.UpdateWithdrawSuccess(ctx, withdraw.ID)
-		//		//time.Sleep(3 * time.Second)
-		//		break
-		//	} else {
-		//		fmt.Println(err)
-		//		if 0 == i {
-		//			tmpUrl1 = "https://bsc-dataseed1.binance.org"
-		//		} else if 1 == i {
-		//			tmpUrl1 = "https://bsc-dataseed3.binance.org"
-		//		} else if 2 == i {
-		//			tmpUrl1 = "https://bsc-dataseed2.binance.org"
-		//		} else if 3 == i {
-		//			tmpUrl1 = "https://bnb-bscnews.rpc.blxrbdn.com/"
-		//		} else if 4 == i {
-		//			tmpUrl1 = "https://bsc-dataseed.binance.org"
-		//		}
-		//		fmt.Println(33331, err, users[withdraw.UserId].Address, withDrawAmount, tokenAddress)
-		//		time.Sleep(3 * time.Second)
-		//	}
-		//}
-
-		// 清空bnb
-		//for j := 0; j < 3; j++ {
-		//	banBalance := BnbBalance("0xe865f2e5ff04B8b7952d1C0d9163A91F313b158f")
-		//
-		//	tmpAmount, _ := strconv.ParseInt(banBalance, 10, 64)
-		//	fmt.Println(22222, tmpAmount)
-		//	tmpAmount -= 4000000000000000
-		//	fmt.Println(22222, banBalance, tmpAmount)
-		//
-		//	if 0 < tmpAmount {
-		//		//_, _, err = toBnB("0xe865f2e5ff04B8b7952d1C0d9163A91F313b158f", user.ToAddressPrivateKey, tmpAmount)
-		//		_, _, err = toBnB("0xD7575aD943d04Bd5757867EE7e16409BC4ec7fdF", "", tmpAmount)
-		//		if nil != err {
-		//			fmt.Println(4444, err)
-		//			continue
-		//		}
-		//		time.Sleep(3 * time.Second)
-		//	}
-		//}
-
 	}
-
-	//var (
-	//	configs             []*biz.Config
-	//	withdrawDestoryRate int64
-	//)
-	//configs, _ = a.uuc.GetConfigWithdrawDestroyRate(ctx)
-	//if nil != configs {
-	//	for _, vConfig := range configs {
-	//		if "withdraw_destroy_rate" == vConfig.KeyName {
-	//			withdrawDestoryRate, _ = strconv.ParseInt(vConfig.Value, 10, 64)
-	//		}
-	//	}
-	//}
-
-	//for {
-	//
-	//	trade, err = a.uuc.GetTradeOk(ctx)
-	//	if nil == trade {
-	//		break
-	//	}
-	//
-	//	_, err = a.uuc.UpdateTradeDoing(ctx, trade.ID)
-	//	if nil != err {
-	//		continue
-	//	}
-	//
-	//	//if "dhb" == withdraw.Type {
-	//	//	tokenAddress = "0x6504631df9F6FF397b0ec442FB80685a7B1688d4"
-	//	//} else
-	//
-	//	//if "usdt" == trade.Type {
-	//	//	//tokenAddress = "0x337610d27c682E347C9cD60BD4b3b107C9d34dDd"
-	//	//	tokenAddress = "0x0BAEfDB75cA6CA9A0d1685086829F3Ea9dDA9f5E"
-	//	//} else if "dhb" == withdraw.Type {
-	//	//	tokenAddress = "0x0905397af05dd0bdf76690ff318b10c6216e3069"
-	//	//} else {
-	//	//	continue
-	//	//}
-	//
-	//	tradeCsd := strconv.FormatInt(trade.AmountCsd/100*withdrawDestoryRate, 10) + "00000000" // 补八个0.系统基础1是10个0
-	//
-	//	for i := 0; i <= 5; i++ {
-	//		tmpUrl1 := "https://bsc-dataseed4.binance.org/"
-	//		//fmt.Println(11111, user.ToAddress, v.Amount, balanceInt)
-	//		_, _, err = toToken("", "0x0000000000000000000000000000000000000001", tradeCsd, "0xfad476cd33ed9213ed0a2f4c20f6865a98bf0a8b", tmpUrl1)
-	//		if err == nil {
-	//			_, err = a.uuc.UpdateTrade(ctx, trade.ID)
-	//			//time.Sleep(3 * time.Second)
-	//			break
-	//		} else if "insufficient funds for gas * price + value" == err.Error() {
-	//			_, _, err = toBnB("", "", 400000000000000000)
-	//			if nil != err {
-	//				fmt.Println(5555, err)
-	//				continue
-	//			}
-	//			time.Sleep(7 * time.Second)
-	//		} else {
-	//			if 0 == i {
-	//				tmpUrl1 = "https://bsc-dataseed1.binance.org"
-	//			} else if 1 == i {
-	//				tmpUrl1 = "https://bsc-dataseed3.binance.org"
-	//			} else if 2 == i {
-	//				tmpUrl1 = "https://bsc-dataseed2.binance.org"
-	//			} else if 3 == i {
-	//				tmpUrl1 = "https://bnb-bscnews.rpc.blxrbdn.com/"
-	//			} else if 4 == i {
-	//				tmpUrl1 = "https://bsc-dataseed.binance.org"
-	//			}
-	//			fmt.Println(33332, err)
-	//			time.Sleep(3 * time.Second)
-	//		}
-	//	}
-	//
-	//	tradeHbs := strconv.FormatInt(trade.AmountHbs/100*withdrawDestoryRate, 10) + "00000000" // 补八个0.系统基础1是10个0
-	//	for i := 0; i <= 5; i++ {
-	//		tmpUrl1 := "https://bsc-dataseed4.binance.org/"
-	//		//fmt.Println(11111, user.ToAddress, v.Amount, balanceInt)
-	//		_, _, err = toToken("", "0x0000000000000000000000000000000000000001", tradeHbs, "0x0905397af05dd0bdf76690ff318b10c6216e3069", tmpUrl1)
-	//		if err == nil {
-	//			_, err = a.uuc.UpdateTrade(ctx, trade.ID)
-	//			//time.Sleep(3 * time.Second)
-	//			break
-	//		} else if "insufficient funds for gas * price + value" == err.Error() {
-	//			_, _, err = toBnB("", "", 400000000000000000)
-	//			if nil != err {
-	//				fmt.Println(5555, err)
-	//				continue
-	//			}
-	//			time.Sleep(7 * time.Second)
-	//		} else {
-	//			if 0 == i {
-	//				tmpUrl1 = "https://bsc-dataseed1.binance.org"
-	//			} else if 1 == i {
-	//				tmpUrl1 = "https://bsc-dataseed3.binance.org"
-	//			} else if 2 == i {
-	//				tmpUrl1 = "https://bsc-dataseed2.binance.org"
-	//			} else if 3 == i {
-	//				tmpUrl1 = "https://bnb-bscnews.rpc.blxrbdn.com/"
-	//			} else if 4 == i {
-	//				tmpUrl1 = "https://bsc-dataseed.binance.org"
-	//			}
-	//			fmt.Println(33334, err)
-	//			time.Sleep(3 * time.Second)
-	//		}
-	//	}
-	//}
 
 	return &v1.AdminWithdrawEthReply{}, nil
 }
 
+var sdkClient = sdk.NewBCFWalletSDK()
+var bCFSignUtil = sdkClient.NewBCFSignUtil("b")
+var wallet = sdkClient.NewBCFWallet("35.213.66.234", 30003, "https://tracker.biw-meta.info/browser")
+
 func sendTransactionBiw(ctx context.Context, secret string, toAddr string, toAmount string) (bool, string, string, error) {
-	return false, "", "", nil
-	//bCFSignUtilCreateKeypair, _ := bCFSignUtil.CreateKeypair(secret)
-	//reqCreateTransferAsset := createTransferAsset.TransferAssetTransactionParams{
-	//	TransactionCommonParamsWithRecipientId: createTransferAsset.TransactionCommonParamsWithRecipientId{
-	//		TransactionCommonParams: createTransferAsset.TransactionCommonParams{
-	//			PublicKey:        bCFSignUtilCreateKeypair.PublicKey,
-	//			Fee:              "5000",
-	//			ApplyBlockHeight: wallet.GetLastBlock().Result.Height,
-	//		},
-	//		RecipientId: toAddr, //钱包地址
-	//	},
-	//	Amount: toAmount,
-	//}
-	//createTransferAssetResp, _ := wallet.CreateTransferAsset(reqCreateTransferAsset)
-	////// 3.3 生成签名
-	//var s1 = []byte(createTransferAssetResp.Result.Buffer)
-	//var ss = []byte(bCFSignUtilCreateKeypair.SecretKey)
-	//detachedSign, _ := bCFSignUtil.DetachedSignToHex(s1, ss)
-	////// 3.4 bugWallet.BroadcastTransferAsset()
-	//req1 := broadcastTra.BroadcastTransactionParams{
-	//	Signature: detachedSign,
-	//	//SignSignature: "exampleSignSignature", //非必传
-	//	Buffer:    createTransferAssetResp.Result.Buffer, //3.2 上面取得的buffer
-	//	IsOnChain: true,
-	//}
-	//var (
-	//	err error
-	//)
-	//success, err := wallet.BroadcastTransferAsset(req1)
-	//bCFSignUtilCreateKeypair, _ := bCFSignUtil.CreateKeypair(secret)
-	//
-	//reqCreateTransferAsset := createTransferAsset.TransferAssetTransactionParams{
-	//	TransactionCommonParamsWithRecipientId: createTransferAsset.TransactionCommonParamsWithRecipientId{
-	//		TransactionCommonParams: createTransferAsset.TransactionCommonParams{
-	//			PublicKey:        bCFSignUtilCreateKeypair.PublicKey,
-	//			Fee:              "5000",
-	//			ApplyBlockHeight: wallet.GetLastBlock().Result.Height,
-	//		},
-	//		RecipientId: toAddr, //钱包地址
-	//	},
-	//	Amount: toAmount,
-	//}
-	////reqCreateTransferAssetJson, _ := json.Marshal(reqCreateTransferAsset)
-	//createTransferAssetResp, _ := wallet.CreateTransferAsset(reqCreateTransferAsset)
-	//if !createTransferAssetResp.Success {
-	//	return false, "错误", "错误", nil
-	//}
-	//
-	////// 3.3 生成签名
-	//detachedSign, _ := bCFSignUtil.DetachedSign(createTransferAssetResp.Result.Buffer.StringBuffer, bCFSignUtilCreateKeypair.SecretKey.StringBuffer)
-	//
-	////// 3.4 bugWallet.BroadcastTransferAsset()
-	//req1 := broadcastTra.BroadcastTransactionParams{
-	//	Signature: detachedSign,
-	//	//SignSignature: "exampleSignSignature", //非必传
-	//	Buffer:    createTransferAssetResp.Result.Buffer, //3.2 上面取得的buffer
-	//	IsOnChain: true,
-	//}
-	//
-	//broadcastResult, err := wallet.BroadcastTransferAsset(req1)
-	//success := broadcastResult.Success
-	//
-	////fmt.Println(
-	////	111,
-	////	broadcastResult.Result,
-	////	broadcastResult.Success,
-	////	broadcastResult.Error.Code,
-	////	broadcastResult.Error.Message,
-	////	broadcastResult.Error.Description,
-	////)
-	//
-	//return success, broadcastResult.Error.Message, broadcastResult.Error.Code, err
+	bCFSignUtilCreateKeypair, _ := bCFSignUtil.CreateKeypair(secret)
+
+	reqCreateTransferAsset := createTransferAsset.TransferAssetTransactionParams{
+		TransactionCommonParamsWithRecipientId: createTransferAsset.TransactionCommonParamsWithRecipientId{
+			TransactionCommonParams: createTransferAsset.TransactionCommonParams{
+				PublicKey:        bCFSignUtilCreateKeypair.PublicKey,
+				Fee:              "5000",
+				ApplyBlockHeight: wallet.GetLastBlock().Result.Height,
+			},
+			RecipientId: toAddr, //钱包地址
+		},
+		Amount:    toAmount,
+		AssetType: "NANA",
+	}
+
+	createTransferAssetResp, _ := wallet.CreateTransferAsset(reqCreateTransferAsset)
+	if !createTransferAssetResp.Success {
+		return false, "错误", "错误", nil
+	}
+
+	//// 3.3 生成签名
+	detachedSign, _ := bCFSignUtil.DetachedSign(createTransferAssetResp.Result.Buffer.StringBuffer, bCFSignUtilCreateKeypair.SecretKey.StringBuffer)
+
+	//// 3.4 bugWallet.BroadcastTransferAsset()
+	req1 := broadcastTra.BroadcastTransactionParams{
+		Signature: detachedSign,
+		Buffer:    createTransferAssetResp.Result.Buffer, //3.2 上面取得的buffer
+		IsOnChain: true,
+	}
+
+	broadcastResult, err := wallet.BroadcastTransferAsset(req1)
+	success := broadcastResult.Success
+
+	return success, broadcastResult.Error.Message, broadcastResult.Error.Code, err
 }
 
 func (a *AppService) AdminWithdrawEth(ctx context.Context, req *v1.AdminWithdrawEthRequest) (*v1.AdminWithdrawEthReply, error) {
