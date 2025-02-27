@@ -10,18 +10,17 @@ import (
 )
 
 type EthUserRecord struct {
-	ID         int64     `gorm:"primarykey;type:int"`
-	Hash       string    `gorm:"type:varchar(100);not null"`
-	UserId     int64     `gorm:"type:int;not null"`
-	Status     string    `gorm:"type:varchar(45);not null"`
-	Type       string    `gorm:"type:varchar(45);not null"`
-	Amount     string    `gorm:"type:varchar(45);not null"`
-	AmountTwo  uint64    `gorm:"type:bigint;not null"`
-	AmountUsdt float64   `gorm:"type:decimal(65,20);not null"`
-	CoinType   string    `gorm:"type:varchar(45);not null"`
-	CreatedAt  time.Time `gorm:"type:datetime;not null"`
-	UpdatedAt  time.Time `gorm:"type:datetime;not null"`
-	Last       int64     `gorm:"type:int;not null"`
+	ID        int64     `gorm:"primarykey;type:int"`
+	Hash      string    `gorm:"type:varchar(100);not null"`
+	UserId    int64     `gorm:"type:int;not null"`
+	Status    string    `gorm:"type:varchar(45);not null"`
+	Type      string    `gorm:"type:varchar(45);not null"`
+	Amount    string    `gorm:"type:varchar(45);not null"`
+	AmountTwo uint64    `gorm:"type:bigint;not null"`
+	CoinType  string    `gorm:"type:varchar(45);not null"`
+	CreatedAt time.Time `gorm:"type:datetime;not null"`
+	UpdatedAt time.Time `gorm:"type:datetime;not null"`
+	Last      int64     `gorm:"type:int;not null"`
 }
 
 type EthUserRecordRepo struct {

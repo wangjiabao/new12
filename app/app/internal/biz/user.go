@@ -352,6 +352,7 @@ type UserInfoRepo interface {
 	UpdateUserNewTwoNewTwoTwo(ctx context.Context, userId int64, amount uint64, last uint64, coinType string) error
 	UpdateUserNewTwoNewTwo(ctx context.Context, userId int64, amountRaw float64) error
 	UpdateUserReward(ctx context.Context, userId int64, amountUsdtAll float64, amountUsdt float64, amountNana float64, amountUsdtOrigin float64, stop bool) (int64, error)
+	UpdateUserRewardAll(ctx context.Context, userId int64, amountUsdtAll float64, amountUsdt float64, amountNana float64, amountUsdtOrigin float64, stop bool) (int64, error)
 	UpdateUserRewardRecommend(ctx context.Context, userId int64, amountUsdt float64, amountUsdtTotal float64, stop bool) (int64, error)
 	UpdateUserRewardArea(ctx context.Context, userId int64, amountUsdtAll float64, amountUsdt float64, amountNana float64, amountUsdtOrigin float64, tmpLevel, stop bool) (int64, error)
 	UpdateUserRewardAreaTwo(ctx context.Context, userId int64, amountUsdt float64, stop bool) (int64, error)
@@ -2825,6 +2826,7 @@ func lessThanOrEqualZero(a, b float64, epsilon float64) bool {
 func (uuc *UserUseCase) AdminDailyLocationReward(ctx context.Context, req *v1.AdminDailyLocationRewardRequest) (*v1.AdminDailyLocationRewardReply, error) {
 	var (
 		level1           float64
+		allLevel         float64
 		vv1              float64
 		v2               float64
 		v3               float64
@@ -2841,11 +2843,13 @@ func (uuc *UserUseCase) AdminDailyLocationReward(ctx context.Context, req *v1.Ad
 		err              error
 	)
 
-	configs, _ = uuc.configRepo.GetConfigByKeys(ctx, "level_1", "b_price", "reward_usdt_rate", "exchange_nana_rate", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v0", "v00")
+	configs, _ = uuc.configRepo.GetConfigByKeys(ctx, "all_level", "level_1", "2025-02-27 12:03:24", "reward_usdt_rate", "exchange_nana_rate", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v0", "v00")
 	if nil != configs {
 		for _, vConfig := range configs {
 			if "level_1" == vConfig.KeyName {
 				level1, _ = strconv.ParseFloat(vConfig.Value, 10)
+			} else if "all_level" == vConfig.KeyName {
+				allLevel, _ = strconv.ParseFloat(vConfig.Value, 10)
 			} else if "b_price" == vConfig.KeyName {
 				bPrice, _ = strconv.ParseFloat(vConfig.Value, 10)
 			} else if "reward_usdt_rate" == vConfig.KeyName {
@@ -3249,6 +3253,108 @@ func (uuc *UserUseCase) AdminDailyLocationReward(ctx context.Context, req *v1.Ad
 			}
 		}
 
+	}
+
+	// 全网
+	var (
+		buys      []*Reward
+		buyAmount float64
+	)
+	buys, err = uuc.ubRepo.GetSystemYesterdayLocationReward(ctx, -1)
+	if nil != err {
+		return nil, err
+	}
+
+	if 0 >= len(buys) {
+		return nil, err
+	}
+
+	for _, buy := range buys {
+		buyAmount += buy.AmountNew
+	}
+
+	if 1 > allLevel {
+		fmt.Println("今日分红错误，错误的比率4", bPrice, exchangeNanaRate, rewardUsdtRate, allLevel)
+		return nil, err
+	}
+
+	buyAmountPer := buyAmount * allLevel / float64(len(userReward1)-len(stopUserIds))
+	fmt.Println("今日全网入金分红：", buyAmount, allLevel, len(userReward1), len(stopUserIds), buyAmountPer)
+
+	if 0 >= buyAmountPer {
+		return nil, err
+	}
+
+	for _, v := range userReward1 {
+		// 本次执行已经出局
+		if _, ok := stopUserIds[v.ID]; ok {
+			continue
+		}
+
+		tmp := buyAmountPer
+
+		stop := false
+		if tmp+v.AmountUsdtGet >= v.AmountUsdt*3 {
+			tmp = math.Abs(v.AmountUsdt*3 - v.AmountUsdtGet)
+			stop = true
+		}
+
+		tmpUsdt := tmp * rewardUsdtRate
+		tmpNana := tmp * exchangeNanaRate * bPrice
+
+		// 推荐人
+		var (
+			userRecommend *UserRecommend
+		)
+		if _, ok := userRecommendsMap[v.ID]; ok {
+			userRecommend = userRecommendsMap[v.ID]
+		} else {
+			fmt.Println("错误分红静态，信息缺失：", err, v)
+		}
+
+		tmp = math.Round(tmp*10000000) / 10000000
+		tmpUsdt = math.Round(tmpUsdt*10000000) / 10000000
+		tmpNana = math.Round(tmpNana*10000000) / 10000000
+
+		if err = uuc.tx.ExecTx(ctx, func(ctx context.Context) error { // 事务
+			var (
+				code int64
+			)
+			code, err = uuc.uiRepo.UpdateUserRewardAll(ctx, v.ID, tmp, tmpUsdt, tmpNana, v.AmountUsdtOrigin, stop)
+			if code > 0 && err != nil {
+				fmt.Println("错误分红静态：", err, v)
+			}
+
+			if stop {
+				stopUserIds[v.ID] = true // 出局
+
+				if nil != userRecommend && "" != userRecommend.RecommendCode {
+					var tmpRecommendUserIds []string
+					tmpRecommendUserIds = strings.Split(userRecommend.RecommendCode, "D")
+					for _, vTmpRecommendUserIds := range tmpRecommendUserIds {
+						if 0 >= len(vTmpRecommendUserIds) {
+							continue
+						}
+
+						myUserRecommendUserId, _ := strconv.ParseInt(vTmpRecommendUserIds, 10, 64) // 最后一位是直推人
+						if 0 >= myUserRecommendUserId {
+							continue
+						}
+
+						// 减掉业绩
+						err = uuc.uiRepo.UpdateUserMyTotalAmount(ctx, myUserRecommendUserId, v.AmountUsdtOrigin)
+						if err != nil {
+							fmt.Println("错误分红静态：", err, v)
+						}
+					}
+				}
+			}
+
+			return nil
+		}); nil != err {
+			fmt.Println("err reward daily", err, v)
+			continue
+		}
 	}
 
 	return nil, err
