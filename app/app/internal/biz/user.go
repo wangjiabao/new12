@@ -933,9 +933,9 @@ func (uuc *UserUseCase) AdminLocationList(ctx context.Context, req *v1.AdminLoca
 			res.Locations = append(res.Locations, &v1.AdminLocationListReply_LocationList{
 				Address:       v.Address,
 				Current:       fmt.Sprintf("%.2f", v.AmountUsdtGet),
-				CurrentMax:    fmt.Sprintf("%.2f", v.AmountUsdt*0.7*2.1),
+				CurrentMax:    fmt.Sprintf("%.2f", v.AmountUsdt*0.7*3),
 				Out:           v.OutRate,
-				CurrentMaxSub: fmt.Sprintf("%.2f", v.AmountUsdt*0.7*2.1-v.AmountUsdtGet),
+				CurrentMaxSub: fmt.Sprintf("%.2f", v.AmountUsdt*0.7*3-v.AmountUsdtGet),
 				Usdt:          fmt.Sprintf("%.2f", v.AmountUsdtOrigin),
 			})
 		}
@@ -972,8 +972,8 @@ func (uuc *UserUseCase) AdminLocationList(ctx context.Context, req *v1.AdminLoca
 
 			res.Locations = append(res.Locations, &v1.AdminLocationListReply_LocationList{
 				Address:    users[v.UserId].Address,
-				Current:    fmt.Sprintf("%.2f", v.AmountNew*0.7*2.1),
-				CurrentMax: fmt.Sprintf("%.2f", v.AmountNew*0.7*2.1),
+				Current:    fmt.Sprintf("%.2f", v.AmountNew*0.7*3),
+				CurrentMax: fmt.Sprintf("%.2f", v.AmountNew*0.7*3),
 				CreatedAt:  v.CreatedAt.Add(8 * time.Hour).Format("2006-01-02 15:04:05"),
 			})
 		}
@@ -2856,8 +2856,8 @@ func (uuc *UserUseCase) AdminDailyLocationReward(ctx context.Context, req *v1.Ad
 		tmp := v.AmountUsdt * level1
 
 		stop := false
-		if tmp+v.AmountUsdtGet >= v.AmountUsdt*2.1 {
-			tmp = math.Abs(v.AmountUsdt*2.1 - v.AmountUsdtGet)
+		if tmp+v.AmountUsdtGet >= v.AmountUsdt*3 {
+			tmp = math.Abs(v.AmountUsdt*3 - v.AmountUsdtGet)
 			stop = true
 		}
 
@@ -2922,8 +2922,8 @@ func (uuc *UserUseCase) AdminDailyLocationReward(ctx context.Context, req *v1.Ad
 	// 大小区
 	for _, v := range userReward1 {
 		tmp := v.AmountUsdt * level1
-		if tmp+v.AmountUsdtGet >= v.AmountUsdt*2.1 {
-			tmp = math.Abs(v.AmountUsdt*2.1 - v.AmountUsdtGet)
+		if tmp+v.AmountUsdtGet >= v.AmountUsdt*3 {
+			tmp = math.Abs(v.AmountUsdt*3 - v.AmountUsdtGet)
 		}
 
 		// 推荐人
@@ -3077,8 +3077,8 @@ func (uuc *UserUseCase) AdminDailyLocationReward(ctx context.Context, req *v1.Ad
 				stopArea bool
 			)
 
-			if tmpAreaAmount+tmpRecommendUser.AmountUsdtGet >= tmpRecommendUser.AmountUsdt*2.1 {
-				tmpAreaAmount = math.Abs(tmpRecommendUser.AmountUsdt*2.1 - tmpRecommendUser.AmountUsdtGet)
+			if tmpAreaAmount+tmpRecommendUser.AmountUsdtGet >= tmpRecommendUser.AmountUsdt*3 {
+				tmpAreaAmount = math.Abs(tmpRecommendUser.AmountUsdt*3 - tmpRecommendUser.AmountUsdtGet)
 				stopArea = true
 			}
 
