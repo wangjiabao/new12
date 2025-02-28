@@ -732,9 +732,6 @@ func (uuc *UserUseCase) AdminUserList(ctx context.Context, req *v1.AdminUserList
 			currentLevel = 6
 		} else if 1710000 <= tmpAreaMin {
 			currentLevel = 7
-		} else {
-			// 跳过，没级别
-			continue
 		}
 
 		res.Users = append(res.Users, &v1.AdminUserListReply_UserList{
