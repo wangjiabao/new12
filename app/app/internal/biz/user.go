@@ -684,8 +684,8 @@ func (uuc *UserUseCase) AdminUserList(ctx context.Context, req *v1.AdminUserList
 		usersAll []*User
 		usersMap map[int64]*User
 	)
-	users, err = uuc.repo.GetAllUsers(ctx)
-	if nil == users {
+	usersAll, err = uuc.repo.GetAllUsers(ctx)
+	if nil == usersAll {
 		return nil, nil
 	}
 	usersMap = make(map[int64]*User, 0)
