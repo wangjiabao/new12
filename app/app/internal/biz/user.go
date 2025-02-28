@@ -629,7 +629,7 @@ func (uuc *UserUseCase) AdminUserList(ctx context.Context, req *v1.AdminUserList
 	users, err, count = uuc.repo.GetUsers(ctx, &Pagination{
 		PageNum:  int(req.Page),
 		PageSize: 10,
-	}, req.Address, true, req.Vip)
+	}, req.Address, false, 0)
 	if nil != err {
 		return res, nil
 	}
