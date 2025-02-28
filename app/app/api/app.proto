@@ -419,7 +419,7 @@ service App {
 
 	rpc LockUser(LockUserRequest) returns (LockUserReply) {
 		option (google.api.http) = {
-			post: "/api/admin_dhb/lock_user"
+			post: "/api/admin_dhb/vip_lock"
 			body: "send_body"
 		};
 	};
