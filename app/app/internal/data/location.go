@@ -1306,6 +1306,7 @@ func (lr *LocationRepo) GetLocationsOut(ctx context.Context, b *biz.Pagination, 
 			TypeRecordId:    location.TypeRecordId,
 			Reason:          location.Reason,
 			CreatedAt:       location.CreatedAt,
+			AmountNew:       location.AmountNew,
 		})
 	}
 
@@ -1542,7 +1543,7 @@ func (lr *LocationRepo) GetLocationUserCount(ctx context.Context) int64 {
 	var (
 		count int64
 	)
-	lr.data.db.Table("location_new").Group("user_id").Count(&count)
+	lr.data.db.Table("user").Where("amount_usdt>?", 0).Count(&count)
 	return count
 }
 

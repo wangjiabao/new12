@@ -166,11 +166,13 @@ type Reward struct {
 	AmountB          int64     `gorm:"type:bigint;not null"`
 	BalanceRecordId  int64     `gorm:"type:int;not null"`
 	Type             string    `gorm:"type:varchar(45);not null"`
+	Address          string    `gorm:"type:varchar(45);not null"`
 	TypeRecordId     int64     `gorm:"type:int;not null"`
 	Reason           string    `gorm:"type:varchar(45);not null"`
 	AmountNew        float64   `gorm:"type:decimal(65,20);not null"`
 	AmountNewTwo     float64   `gorm:"type:decimal(65,20);not null"`
 	ReasonLocationId int64     `gorm:"type:int;not null"`
+	Status           int64     `gorm:"type:int;not null"`
 	LocationType     string    `gorm:"type:varchar(45);not null"`
 	CreatedAt        time.Time `gorm:"type:datetime;not null"`
 	UpdatedAt        time.Time `gorm:"type:datetime;not null"`
@@ -511,11 +513,14 @@ func (u *UserRepo) GetUserByUserIds(ctx context.Context, userIds ...int64) (map[
 	res := make(map[int64]*biz.User, 0)
 	for _, item := range users {
 		res[item.ID] = &biz.User{
-			ID:           item.ID,
-			Address:      item.Address,
-			AddressTwo:   item.AddressTwo,
-			AddressThree: item.AddressThree,
-			OutRate:      item.OutRate,
+			ID:               item.ID,
+			Address:          item.Address,
+			AddressTwo:       item.AddressTwo,
+			AddressThree:     item.AddressThree,
+			OutRate:          item.OutRate,
+			AmountUsdtGet:    item.AmountUsdtGet,
+			AmountUsdt:       item.AmountUsdt,
+			AmountUsdtOrigin: item.AmountUsdtOrigin,
 		}
 	}
 	return res, nil
@@ -541,6 +546,7 @@ func (u *UserRepo) GetAllUsers(ctx context.Context) ([]*biz.User, error) {
 			AddressTwo:             item.AddressTwo,
 			AddressThree:           item.AddressThree,
 			Amount:                 item.Amount,
+			AmountBiw:              item.AmountBiw,
 			AmountUsdt:             item.AmountUsdt,
 			AmountUsdtGet:          item.AmountUsdtGet,
 			MyTotalAmount:          item.MyTotalAmount,
@@ -690,15 +696,17 @@ func (u *UserRepo) GetUsers(ctx context.Context, b *biz.Pagination, address stri
 	res := make([]*biz.User, 0)
 	for _, item := range users {
 		res = append(res, &biz.User{
-			ID:             item.ID,
-			Address:        item.Address,
-			CreatedAt:      item.CreatedAt,
-			Amount:         item.Amount,
-			AmountUsdt:     item.AmountUsdt,
-			AmountBiw:      item.AmountBiw,
-			OutRate:        item.OutRate,
-			RecommendLevel: item.RecommendLevel,
-			Lock:           item.Lock,
+			ID:               item.ID,
+			Address:          item.Address,
+			CreatedAt:        item.CreatedAt,
+			Amount:           item.Amount,
+			AmountUsdt:       item.AmountUsdt,
+			AmountBiw:        item.AmountBiw,
+			OutRate:          item.OutRate,
+			RecommendLevel:   item.RecommendLevel,
+			Lock:             item.Lock,
+			AmountUsdtOrigin: item.AmountUsdtOrigin,
+			AmountUsdtGet:    item.AmountUsdtGet,
 		})
 	}
 	return res, nil, count
@@ -2055,6 +2063,8 @@ func (ub *UserBalanceRepo) GetWithdraws(ctx context.Context, b *biz.Pagination, 
 			Status:          withdraw.Status,
 			Type:            withdraw.Type,
 			CreatedAt:       withdraw.CreatedAt,
+			AmountNew:       withdraw.AmountNew,
+			RelAmountNew:    withdraw.RelAmountNew,
 		})
 	}
 	return res, nil, count
@@ -2523,7 +2533,7 @@ func (ui *UserInfoRepo) UpdateUserReward(ctx context.Context, userId int64, amou
 
 	if stop {
 		res := ui.data.DB(ctx).Table("user").Where("id=?", userId).
-			Updates(map[string]interface{}{"amount_usdt_get": 0, "amount_usdt_origin": 0, "amount_usdt": 0, "last": 0})
+			Updates(map[string]interface{}{"amount_usdt_get": 0, "amount_usdt_origin": 0, "amount_usdt": 0, "last": 0, "out_rate": gorm.Expr("out_rate + ?", 1)})
 		if res.Error != nil {
 			return 0, errors.New(500, "UPDATE_USER_ERROR", "用户信息修改失败")
 		}
@@ -2590,12 +2600,12 @@ func (ui *UserInfoRepo) UpdateUserReward(ctx context.Context, userId int64, amou
 }
 
 // UpdateUserRewardArea .
-func (ui *UserInfoRepo) UpdateUserRewardArea(ctx context.Context, userId int64, amountUsdtAll float64, amountUsdt float64, amountNana float64, amountUsdtOrigin float64, tmpLevel, stop bool) (int64, error) {
+func (ui *UserInfoRepo) UpdateUserRewardArea(ctx context.Context, userId, i, level int64, userAddress string, amountUsdtAll float64, amountUsdt float64, amountNana float64, amountUsdtOrigin float64, tmpLevel, stop bool) (int64, error) {
 	var err error
 
 	if stop {
 		res := ui.data.DB(ctx).Table("user").Where("id=?", userId).
-			Updates(map[string]interface{}{"amount_usdt_get": 0, "amount_usdt_origin": 0, "amount_usdt": 0, "last": 0})
+			Updates(map[string]interface{}{"amount_usdt_get": 0, "amount_usdt_origin": 0, "amount_usdt": 0, "last": 0, "out_rate": gorm.Expr("out_rate + ?", 1)})
 		if res.Error != nil {
 			return 0, errors.New(500, "UPDATE_USER_ERROR", "用户信息修改失败")
 		}
@@ -2662,7 +2672,9 @@ func (ui *UserInfoRepo) UpdateUserRewardArea(ctx context.Context, userId int64, 
 	reward.UserId = userBalance.UserId
 	reward.AmountNew = amountUsdt
 	reward.AmountNewTwo = amountNana
-	reward.BalanceRecordId = userBalanceRecode.ID
+	reward.BalanceRecordId = level
+	reward.ReasonLocationId = i
+	reward.Address = userAddress
 	if tmpLevel {
 		reward.Type = "system_reward_area_daily_three" // 本次分红的行为类型
 		reward.Reason = "area_three"
@@ -2682,36 +2694,36 @@ func (ui *UserInfoRepo) UpdateUserRewardArea(ctx context.Context, userId int64, 
 func (ui *UserInfoRepo) UpdateUserRewardAll(ctx context.Context, userId int64, amountUsdtAll float64, amountUsdt float64, amountNana float64, amountUsdtOrigin float64, stop bool) (int64, error) {
 	var err error
 
-	if stop {
-		res := ui.data.DB(ctx).Table("user").Where("id=?", userId).
-			Updates(map[string]interface{}{"amount_usdt_get": 0, "amount_usdt_origin": 0, "amount_usdt": 0, "last": 0})
-		if res.Error != nil {
-			return 0, errors.New(500, "UPDATE_USER_ERROR", "用户信息修改失败")
-		}
-
-		var rewardStop Reward
-		rewardStop.UserId = userId
-		rewardStop.AmountNew = amountUsdtOrigin
-		rewardStop.Type = "out"   // 本次分红的行为类型
-		rewardStop.Reason = "out" // 给我分红的理由
-		err = ui.data.DB(ctx).Table("reward").Create(&rewardStop).Error
-		if err != nil {
-			return 0, err
-		}
-	} else {
-		res := ui.data.DB(ctx).Table("user").Where("id=?", userId).
-			Updates(map[string]interface{}{"amount_usdt_get": gorm.Expr("amount_usdt_get + ?", amountUsdtAll)})
-		if res.Error != nil {
-			return 0, errors.New(500, "UPDATE_USER_ERROR", "用户信息修改失败")
-		}
-	}
+	//if stop {
+	//	res := ui.data.DB(ctx).Table("user").Where("id=?", userId).
+	//		Updates(map[string]interface{}{"amount_usdt_get": 0, "amount_usdt_origin": 0, "amount_usdt": 0, "last": 0})
+	//	if res.Error != nil {
+	//		return 0, errors.New(500, "UPDATE_USER_ERROR", "用户信息修改失败")
+	//	}
+	//
+	//	var rewardStop Reward
+	//	rewardStop.UserId = userId
+	//	rewardStop.AmountNew = amountUsdtOrigin
+	//	rewardStop.Type = "out"   // 本次分红的行为类型
+	//	rewardStop.Reason = "out" // 给我分红的理由
+	//	err = ui.data.DB(ctx).Table("reward").Create(&rewardStop).Error
+	//	if err != nil {
+	//		return 0, err
+	//	}
+	//} else {
+	//	res := ui.data.DB(ctx).Table("user").Where("id=?", userId).
+	//		Updates(map[string]interface{}{"amount_usdt_get": gorm.Expr("amount_usdt_get + ?", amountUsdtAll)})
+	//	if res.Error != nil {
+	//		return 0, errors.New(500, "UPDATE_USER_ERROR", "用户信息修改失败")
+	//	}
+	//}
 
 	if err = ui.data.DB(ctx).Table("user_balance").
 		Where("user_id=?", userId).
 		Updates(map[string]interface{}{
 			"balance_usdt_float": gorm.Expr("balance_usdt_float + ?", amountUsdt),
-			"balance_raw_float":  gorm.Expr("balance_raw_float + ?", amountNana),
-			"all_float":          gorm.Expr("all_float + ?", amountUsdtAll),
+			//"balance_raw_float":  gorm.Expr("balance_raw_float + ?", amountNana),
+			"all_float": gorm.Expr("all_float + ?", amountUsdtAll),
 		}).Error; nil != err {
 		return 0, errors.NotFound("user balance err", "user balance not found")
 	}
@@ -2729,7 +2741,7 @@ func (ui *UserInfoRepo) UpdateUserRewardAll(ctx context.Context, userId int64, a
 	userBalanceRecode.Type = "reward"
 	userBalanceRecode.CoinType = "usdt"
 	userBalanceRecode.AmountNew = amountUsdt
-	userBalanceRecode.AmountNewTwo = amountNana
+	//userBalanceRecode.AmountNewTwo = amountNana
 	err = ui.data.DB(ctx).Table("user_balance_record").Create(&userBalanceRecode).Error
 	if err != nil {
 		return 0, err
@@ -2738,7 +2750,7 @@ func (ui *UserInfoRepo) UpdateUserRewardAll(ctx context.Context, userId int64, a
 	var reward Reward
 	reward.UserId = userBalance.UserId
 	reward.AmountNew = amountUsdt
-	reward.AmountNewTwo = amountNana
+	//reward.AmountNewTwo = amountNana
 	reward.BalanceRecordId = userBalanceRecode.ID
 	reward.Type = "system_reward_all_daily" // 本次分红的行为类型
 	reward.Reason = "all"                   // 给我分红的理由
@@ -4538,13 +4550,7 @@ func (ub *UserBalanceRepo) GetUserRewards(ctx context.Context, b *biz.Pagination
 	}
 
 	if "" != reason {
-		if "exchange" == reason {
-			instance = instance.Where("reason = ? or reason = ?", "exchange", "exchange_2")
-		} else {
-			instance = instance.Where("reason=?", reason)
-		}
-	} else {
-		instance = instance.Where("reason != ?", "price_change")
+		instance = instance.Where("reason=?", reason)
 	}
 
 	instance = instance.Where("user_id<?", 999999999)
@@ -4571,6 +4577,10 @@ func (ub *UserBalanceRepo) GetUserRewards(ctx context.Context, b *biz.Pagination
 			ReasonLocationId: reward.ReasonLocationId,
 			LocationType:     reward.LocationType,
 			CreatedAt:        reward.CreatedAt,
+			AmountNew:        reward.AmountNew,
+			AmountNewTwo:     reward.AmountNewTwo,
+			Status:           reward.Status,
+			Address:          reward.Address,
 		})
 	}
 	return res, nil, count
@@ -4696,11 +4706,13 @@ func (ub UserBalanceRepo) GetUserBalanceByUserIds(ctx context.Context, userIds .
 
 	for _, userBalance := range userBalances {
 		res[userBalance.UserId] = &biz.UserBalance{
-			ID:          userBalance.ID,
-			UserId:      userBalance.UserId,
-			BalanceUsdt: userBalance.BalanceUsdt,
-			BalanceDhb:  userBalance.BalanceDhb,
-			BalanceC:    userBalance.BalanceC,
+			ID:               userBalance.ID,
+			UserId:           userBalance.UserId,
+			BalanceUsdt:      userBalance.BalanceUsdt,
+			BalanceDhb:       userBalance.BalanceDhb,
+			BalanceC:         userBalance.BalanceC,
+			BalanceUsdtFloat: userBalance.BalanceUsdtFloat,
+			BalanceRawFloat:  userBalance.BalanceRawFloat,
 		}
 	}
 
@@ -4735,15 +4747,19 @@ type UserBalanceTotal struct {
 	Total int64
 }
 
+type UserBalanceTotalFloat struct {
+	Total float64
+}
+
 type UserSortRecommendReward struct {
 	UserId int64
 	Total  int64
 }
 
 // GetUserBalanceUsdtTotal .
-func (ub UserBalanceRepo) GetUserBalanceUsdtTotal(ctx context.Context) (int64, error) {
-	var total UserBalanceTotal
-	if err := ub.data.db.Table("user_balance").Select("sum(balance_usdt) as total").Take(&total).Error; err != nil {
+func (ub UserBalanceRepo) GetUserBalanceUsdtTotal(ctx context.Context) (float64, error) {
+	var total UserBalanceTotalFloat
+	if err := ub.data.db.Table("user_balance").Select("sum(balance_usdt_float) as total").Take(&total).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return total.Total, errors.NotFound("USER_BALANCE_NOT_FOUND", "user balance not found")
 		}
@@ -4811,9 +4827,9 @@ func (ub UserBalanceRepo) GetUserLocationNewCurrent(ctx context.Context) (int64,
 }
 
 // GetUserBalanceDHBTotal .
-func (ub UserBalanceRepo) GetUserBalanceDHBTotal(ctx context.Context) (int64, error) {
-	var total UserBalanceTotal
-	if err := ub.data.db.Table("user_balance").Select("sum(balance_dhb) as total").Take(&total).Error; err != nil {
+func (ub UserBalanceRepo) GetUserBalanceDHBTotal(ctx context.Context) (float64, error) {
+	var total UserBalanceTotalFloat
+	if err := ub.data.db.Table("user_balance").Select("sum(balance_raw_float) as total").Take(&total).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return total.Total, errors.NotFound("USER_BALANCE_NOT_FOUND", "user balance not found")
 		}
@@ -4829,7 +4845,7 @@ func (ub UserBalanceRepo) GetUserBalanceRecordUsdtTotal(ctx context.Context) (in
 	var total UserBalanceTotal
 	if err := ub.data.db.Table("user_balance_record").
 		Where("type=?", "deposit").
-		Where("coin_type=?", "usdt").
+		Where("coin_type=?", "USDT").
 		Select("sum(amount) as total").Take(&total).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return total.Total, errors.NotFound("USER_BALANCE_RECORD_NOT_FOUND", "user balance not found")
@@ -4956,7 +4972,7 @@ func (ub UserBalanceRepo) GetUserBalanceRecordUsdtTotalToday(ctx context.Context
 
 	if err := ub.data.db.Table("user_balance_record").
 		Where("type=?", "deposit").
-		Where("coin_type=?", "usdt").
+		Where("coin_type=?", "USDT").
 		Where("created_at>=?", todayStart).Where("created_at<?", todayEnd).
 		Select("sum(amount) as total").Take(&total).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -4998,8 +5014,8 @@ func (ub UserBalanceRepo) GetSystemWithdrawUsdtFeeTotalToday(ctx context.Context
 }
 
 // GetUserWithdrawUsdtTotalToday .
-func (ub UserBalanceRepo) GetUserWithdrawUsdtTotalToday(ctx context.Context) (int64, error) {
-	var total UserBalanceTotal
+func (ub UserBalanceRepo) GetUserWithdrawUsdtTotalToday(ctx context.Context) (float64, error) {
+	var total UserBalanceTotalFloat
 	now := time.Now().UTC()
 	var startDate time.Time
 	var endDate time.Time
@@ -5015,9 +5031,9 @@ func (ub UserBalanceRepo) GetUserWithdrawUsdtTotalToday(ctx context.Context) (in
 
 	if err := ub.data.db.Table("user_balance_record").
 		Where("type=?", "withdraw").
-		Where("coin_type=?", "usdt").
+		Where("coin_type=?", "USDT").
 		Where("created_at>=?", todayStart).Where("created_at<?", todayEnd).
-		Select("sum(amount) as total").Take(&total).Error; err != nil {
+		Select("sum(amount_new) as total").Take(&total).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return total.Total, errors.NotFound("USER_BALANCE_RECORD_NOT_FOUND", "user balance not found")
 		}
@@ -5029,8 +5045,8 @@ func (ub UserBalanceRepo) GetUserWithdrawUsdtTotalToday(ctx context.Context) (in
 }
 
 // GetUserWithdrawDhbTotalToday .
-func (ub UserBalanceRepo) GetUserWithdrawDhbTotalToday(ctx context.Context) (int64, error) {
-	var total UserBalanceTotal
+func (ub UserBalanceRepo) GetUserWithdrawDhbTotalToday(ctx context.Context) (float64, error) {
+	var total UserBalanceTotalFloat
 	now := time.Now().UTC()
 	var startDate time.Time
 	var endDate time.Time
@@ -5046,9 +5062,9 @@ func (ub UserBalanceRepo) GetUserWithdrawDhbTotalToday(ctx context.Context) (int
 
 	if err := ub.data.db.Table("user_balance_record").
 		Where("type=?", "withdraw").
-		Where("coin_type=?", "dhb").
+		Where("coin_type=?", "NANA").
 		Where("created_at>=?", todayStart).Where("created_at<?", todayEnd).
-		Select("sum(amount) as total").Take(&total).Error; err != nil {
+		Select("sum(amount_new) as total").Take(&total).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return total.Total, errors.NotFound("USER_BALANCE_RECORD_NOT_FOUND", "user balance not found")
 		}
@@ -5077,12 +5093,12 @@ func (ub UserBalanceRepo) GetUserWithdrawUsdtTotalByUserIds(ctx context.Context,
 }
 
 // GetUserWithdrawUsdtTotal .
-func (ub UserBalanceRepo) GetUserWithdrawUsdtTotal(ctx context.Context) (int64, error) {
-	var total UserBalanceTotal
+func (ub UserBalanceRepo) GetUserWithdrawUsdtTotal(ctx context.Context) (float64, error) {
+	var total UserBalanceTotalFloat
 	if err := ub.data.db.Table("user_balance_record").
 		Where("type=?", "withdraw").
-		Where("coin_type=?", "usdt").
-		Select("sum(amount) as total").Take(&total).Error; err != nil {
+		Where("coin_type=?", "USDT").
+		Select("sum(amount_new) as total").Take(&total).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return total.Total, errors.NotFound("USER_BALANCE_RECORD_NOT_FOUND", "user balance not found")
 		}
@@ -5094,12 +5110,12 @@ func (ub UserBalanceRepo) GetUserWithdrawUsdtTotal(ctx context.Context) (int64, 
 }
 
 // GetUserWithdrawDhbTotal .
-func (ub UserBalanceRepo) GetUserWithdrawDhbTotal(ctx context.Context) (int64, error) {
-	var total UserBalanceTotal
+func (ub UserBalanceRepo) GetUserWithdrawDhbTotal(ctx context.Context) (float64, error) {
+	var total UserBalanceTotalFloat
 	if err := ub.data.db.Table("user_balance_record").
 		Where("type=?", "withdraw").
-		Where("coin_type=?", "dhb").
-		Select("sum(amount) as total").Take(&total).Error; err != nil {
+		Where("coin_type=?", "NANA").
+		Select("sum(amount_new) as total").Take(&total).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return total.Total, errors.NotFound("USER_BALANCE_RECORD_NOT_FOUND", "user balance not found")
 		}

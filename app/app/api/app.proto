@@ -579,11 +579,17 @@ message AdminRewardListReply {
 	repeated List rewards = 1;
 	message List {
 		string created_at = 1; // 时间
-		string amount = 2; // 数量
+		string amount = 2; // 数量1
+		string amountNana = 3; // 数量2
 		string address = 5; // 地址
-		string reason = 6; // 原因 每一条替换文案 认购reason=buy，提现reason=withdraw，兑换reason=exchange，前四名reason=four，挖矿reason=location，矩阵reason=area，直推reason=recommend
-		string addressTwo = 7;
-		int64 num = 8;
+		// 原因 每一条替换文案
+		// 认购reason=buy，认购节点reason=buy_super,提现reason=withdraw，
+		// 兑换reason=exchange，静态reason=location，大小区reason=area，
+		// 平级reason=area_three，直推reason=recommend，直推二代reason=recommend_two，节点分红reason=all，
+		string reason = 6;
+		string addressTwo = 7; // 分享地址
+		int64 num = 8;		// 分享代数
+		int64 level = 9; // 级别
 	}
 	 int64 count = 2;
 }
@@ -640,17 +646,15 @@ message AdminUserListReply { // 用户信息
 		string created_at = 1; // 创建时间
 		string address = 2; // 地址
 		string balanceUsdt = 3; // 可提usdt数量
-		string balanceDhb = 4; // isps数量
-		string balanceC = 15; // ispay数量
+		string balanceDhb = 4; // 可提nana数量
 		int64 out = 7; // 出局次数
-		int64 areaTotal = 9; // 总业绩
-		int64 areaMin = 10; // 小区
-		int64 areaMax = 11; // 大区
+		double areaTotal = 9; // 总业绩
+		double areaMin = 10; // 小区
+		double areaMax = 11; // 大区
 		int64 vip = 5; // 会员等级
 		int64 historyRecommend = 6; // 历史推荐人数
-		int64 amountUsdt = 12;
-		int64 amountBiw = 13;
-		int64 recommendLevel = 14;
+		int64 amountUsdt = 12; // 充值usdt余额
+		int64 amountBiw = 13; // 购买节点
 		int64 lock = 17;
 	}
 
@@ -785,16 +789,18 @@ message AdminAllReply {
 	string todayLocation = 4; // 今日入金u数量
 	string allLocation = 5; // 总入金u数量
 	string allLocationTwo = 20; // 总入金u数量
-	string allLocationThree = 21; // 总入金u数量
-	string todayLocationReward = 1; // 今日静态释放
-	string todayRecommendReward = 3; // 今日动态释放
-	string todayRecommendLocationReward = 8; // 今日直推秒结释放
-	string todayAreaReward = 16; // 今日矩阵释放
-	string todayFourReward = 15; // 今日前四名分红u数量
-	string totalIsps= 6; // 全网ISPS数量
+
+//	string todayLocationReward = 1; // 今日静态释放
+//	string todayRecommendLocationReward = 8; // 今日直推秒结释放
+//	string todayAllReward = 3; // 今日节点释放
+//	string todayAreaReward = 16; // 今日大小区释放
+
 	string totalUsdt = 7; // 全网可提U数量
+	string totalNana = 9; // 全网可提U数量
 	string todayWithdrawUsdt = 18; // 今日提U数量
 	string totalWithdrawUsdt = 19; // 总提U数量
+	string todayWithdrawDhb = 22; // 今日提Nana数量
+	string totalWithdrawDhb = 21; // 总提Nana数量
 }
 
 message AdminUserRecommendRequest {

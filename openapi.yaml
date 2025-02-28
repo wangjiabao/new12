@@ -1487,25 +1487,17 @@ components:
                     type: string
                 allLocationTwo:
                     type: string
-                allLocationThree:
-                    type: string
-                todayLocationReward:
-                    type: string
-                todayRecommendReward:
-                    type: string
-                todayRecommendLocationReward:
-                    type: string
-                todayAreaReward:
-                    type: string
-                todayFourReward:
-                    type: string
-                totalIsps:
-                    type: string
                 totalUsdt:
+                    type: string
+                totalNana:
                     type: string
                 todayWithdrawUsdt:
                     type: string
                 totalWithdrawUsdt:
+                    type: string
+                todayWithdrawDhb:
+                    type: string
+                totalWithdrawDhb:
                     type: string
         AdminAreaLevelUpdateReply:
             type: object
@@ -1741,13 +1733,22 @@ components:
                     type: string
                 amount:
                     type: string
+                amountNana:
+                    type: string
                 address:
                     type: string
                 reason:
                     type: string
+                    description: |-
+                        原因 每一条替换文案
+                         认购reason=buy，认购节点reason=buy_super,提现reason=withdraw，
+                         兑换reason=exchange，静态reason=location，大小区reason=area，
+                         平级reason=area_three，直推reason=recommend，直推二代reason=recommend_two，节点分红reason=all，
                 addressTwo:
                     type: string
                 num:
+                    type: string
+                level:
                     type: string
         AdminTradeListReply:
             type: object
@@ -1814,16 +1815,17 @@ components:
                     type: string
                 balanceDhb:
                     type: string
-                balanceC:
-                    type: string
                 out:
                     type: string
                 areaTotal:
-                    type: string
+                    type: number
+                    format: double
                 areaMin:
-                    type: string
+                    type: number
+                    format: double
                 areaMax:
-                    type: string
+                    type: number
+                    format: double
                 vip:
                     type: string
                 historyRecommend:
@@ -1831,8 +1833,6 @@ components:
                 amountUsdt:
                     type: string
                 amountBiw:
-                    type: string
-                recommendLevel:
                     type: string
                 lock:
                     type: string
