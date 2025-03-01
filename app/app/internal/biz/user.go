@@ -3270,12 +3270,12 @@ func (uuc *UserUseCase) AdminAddMoney(ctx context.Context, req *v1.AdminDailyAdd
 			}
 		}
 
-		if req.Biw > 0 {
-			err = uuc.uiRepo.UpdateUserNewTwoNewThree(ctx, user.ID, uint64(req.Biw), 0, "BIW")
-			if nil != err {
-				return err
-			}
-		}
+		//if req.Biw > 0 {
+		//	err = uuc.uiRepo.UpdateUserNewTwoNewThree(ctx, user.ID, uint64(req.Biw), 0, "BIW")
+		//	if nil != err {
+		//		return err
+		//	}
+		//}
 
 		return nil
 	}); nil != err {
