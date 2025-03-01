@@ -857,20 +857,20 @@ message AdminAllRequest {
 
 message AdminAllReply {
 	int64 totalUser = 2; // 激活人数
+	int64 todayTotalUser = 1; // 今日激活人数
 	string todayLocation = 4; // 今日入金u数量
+ 	int64 superTotal = 6; //  超级节点人数
 	string allLocation = 5; // 总入金u数量
-	string allLocationTwo = 20; // 总入金u数量
 
-//	string todayLocationReward = 1; // 今日静态释放
-//	string todayRecommendLocationReward = 8; // 今日直推秒结释放
-//	string todayAllReward = 3; // 今日节点释放
-//	string todayAreaReward = 16; // 今日大小区释放
+	string totalReward = 11; // 全网动静态释放
+	string todayNanaReward = 10; // 今日Nana发放
+	string totalNanaReward = 12; // 总Nana发放
 
 	string totalUsdt = 7; // 全网可提U数量
-	string totalNana = 9; // 全网可提U数量
+	string totalNana = 9; // 全网可提NANA数量
 	string todayWithdrawUsdt = 18; // 今日提U数量
-	string totalWithdrawUsdt = 19; // 总提U数量
 	string todayWithdrawDhb = 22; // 今日提Nana数量
+	string totalWithdrawUsdt = 19; // 总提U数量
 	string totalWithdrawDhb = 21; // 总提Nana数量
 }
 

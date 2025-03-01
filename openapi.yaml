@@ -1579,11 +1579,19 @@ components:
             properties:
                 totalUser:
                     type: string
+                todayTotalUser:
+                    type: string
                 todayLocation:
+                    type: string
+                superTotal:
                     type: string
                 allLocation:
                     type: string
-                allLocationTwo:
+                totalReward:
+                    type: string
+                todayNanaReward:
+                    type: string
+                totalNanaReward:
                     type: string
                 totalUsdt:
                     type: string
@@ -1591,9 +1599,9 @@ components:
                     type: string
                 todayWithdrawUsdt:
                     type: string
-                totalWithdrawUsdt:
-                    type: string
                 todayWithdrawDhb:
+                    type: string
+                totalWithdrawUsdt:
                     type: string
                 totalWithdrawDhb:
                     type: string

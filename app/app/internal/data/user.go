@@ -120,16 +120,23 @@ type PriceChange struct {
 }
 
 type UserBalance struct {
-	ID               int64     `gorm:"primarykey;type:int"`
-	UserId           int64     `gorm:"type:int"`
-	BalanceUsdt      int64     `gorm:"type:bigint"`
-	BalanceUsdtNew   int64     `gorm:"type:bigint"`
-	BalanceUsdtFloat float64   `gorm:"type:decimal(65,20);not null"`
-	BalanceRawFloat  float64   `gorm:"type:decimal(65,20);not null"`
-	BalanceDhb       int64     `gorm:"type:bigint"`
-	BalanceC         int64     `gorm:"type:bigint"`
-	CreatedAt        time.Time `gorm:"type:datetime;not null"`
-	UpdatedAt        time.Time `gorm:"type:datetime;not null"`
+	ID                     int64     `gorm:"primarykey;type:int"`
+	UserId                 int64     `gorm:"type:int"`
+	BalanceUsdt            int64     `gorm:"type:bigint"`
+	BalanceUsdtNew         int64     `gorm:"type:bigint"`
+	BalanceUsdtFloat       float64   `gorm:"type:decimal(65,20);not null"`
+	BalanceRawFloat        float64   `gorm:"type:decimal(65,20);not null"`
+	BalanceDhb             int64     `gorm:"type:bigint"`
+	BalanceC               int64     `gorm:"type:bigint"`
+	CreatedAt              time.Time `gorm:"type:datetime;not null"`
+	UpdatedAt              time.Time `gorm:"type:datetime;not null"`
+	AreaTotalFloat         float64   `gorm:"type:decimal(65,20);not null"`
+	AreaTotalFloatTwo      float64   `gorm:"type:decimal(65,20);not null"`
+	RecommendTotalFloat    float64   `gorm:"type:decimal(65,20);not null"`
+	RecommendLevelFloat    float64   `gorm:"type:decimal(65,20);not null"`
+	RecommendTotalFloatTwo float64   `gorm:"type:decimal(65,20);not null"`
+	AllFloat               float64   `gorm:"type:decimal(65,20);not null"`
+	LocationTotalFloat     float64   `gorm:"type:decimal(65,20);not null"`
 }
 
 type UserRecommendArea struct {
@@ -580,6 +587,36 @@ func (u *UserRepo) GetAllUsers(ctx context.Context) ([]*biz.User, error) {
 			AmountUsdtOrigin:       item.AmountUsdtOrigin,
 		})
 	}
+	return res, nil
+}
+
+// GetAllUserBalance .
+func (u *UserRepo) GetAllUserBalance(ctx context.Context) ([]*biz.UserBalance, error) {
+	var userBalances []*UserBalance
+	if err := u.data.db.Table("user").Order("id asc").Find(&userBalances).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+
+		return nil, errors.New(500, "USER ERROR", err.Error())
+	}
+
+	res := make([]*biz.UserBalance, 0)
+	for _, userBalance := range userBalances {
+		res = append(res, &biz.UserBalance{
+			ID:                     userBalance.ID,
+			UserId:                 userBalance.UserId,
+			BalanceRawFloat:        userBalance.BalanceRawFloat,
+			AreaTotalFloat:         userBalance.AreaTotalFloat,
+			AreaTotalFloatTwo:      userBalance.AreaTotalFloatTwo,
+			RecommendTotalFloat:    userBalance.RecommendTotalFloat,
+			LocationTotalFloat:     userBalance.LocationTotalFloat,
+			AllFloat:               userBalance.AllFloat,
+			RecommendLevelFloat:    userBalance.RecommendLevelFloat,
+			RecommendTotalFloatTwo: userBalance.RecommendTotalFloatTwo,
+		})
+	}
+
 	return res, nil
 }
 
@@ -4864,13 +4901,20 @@ func (ub UserBalanceRepo) GetUserBalanceByUserIds(ctx context.Context, userIds .
 
 	for _, userBalance := range userBalances {
 		res[userBalance.UserId] = &biz.UserBalance{
-			ID:               userBalance.ID,
-			UserId:           userBalance.UserId,
-			BalanceUsdt:      userBalance.BalanceUsdt,
-			BalanceDhb:       userBalance.BalanceDhb,
-			BalanceC:         userBalance.BalanceC,
-			BalanceUsdtFloat: userBalance.BalanceUsdtFloat,
-			BalanceRawFloat:  userBalance.BalanceRawFloat,
+			ID:                     userBalance.ID,
+			UserId:                 userBalance.UserId,
+			BalanceUsdt:            userBalance.BalanceUsdt,
+			BalanceDhb:             userBalance.BalanceDhb,
+			BalanceC:               userBalance.BalanceC,
+			BalanceUsdtFloat:       userBalance.BalanceUsdtFloat,
+			BalanceRawFloat:        userBalance.BalanceRawFloat,
+			AreaTotalFloat:         userBalance.AreaTotalFloat,
+			AreaTotalFloatTwo:      userBalance.AreaTotalFloatTwo,
+			RecommendTotalFloat:    userBalance.RecommendTotalFloat,
+			LocationTotalFloat:     userBalance.LocationTotalFloat,
+			AllFloat:               userBalance.AllFloat,
+			RecommendLevelFloat:    userBalance.RecommendLevelFloat,
+			RecommendTotalFloatTwo: userBalance.RecommendTotalFloatTwo,
 		}
 	}
 
@@ -5106,6 +5150,38 @@ func (ub UserBalanceRepo) GetUserRewardLocationTotalToday(ctx context.Context, r
 		}
 
 		return total.Total, errors.New(500, "REWARD RECORD ERROR", err.Error())
+	}
+
+	return total.Total, nil
+}
+
+// GetUserBalanceRecordCountTotalToday .
+func (ub UserBalanceRepo) GetUserBalanceRecordCountTotalToday(ctx context.Context) (int64, error) {
+	var total UserBalanceTotal
+
+	now := time.Now().UTC()
+	var startDate time.Time
+	var endDate time.Time
+	if 16 <= now.Hour() {
+		startDate = now
+		endDate = now.AddDate(0, 0, 1)
+	} else {
+		startDate = now.AddDate(0, 0, -1)
+		endDate = now
+	}
+	todayStart := time.Date(startDate.Year(), startDate.Month(), startDate.Day(), 16, 0, 0, 0, time.UTC)
+	todayEnd := time.Date(endDate.Year(), endDate.Month(), endDate.Day(), 16, 0, 0, 0, time.UTC)
+
+	if err := ub.data.db.Table("user_balance_record").
+		Where("type=?", "deposit").
+		Where("coin_type=?", "USDT").
+		Where("created_at>=?", todayStart).Where("created_at<?", todayEnd).
+		Select("count(id) as total").Take(&total).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return total.Total, errors.NotFound("USER_BALANCE_RECORD_NOT_FOUND", "user balance not found")
+		}
+
+		return total.Total, errors.New(500, "USER BALANCE RECORD ERROR", err.Error())
 	}
 
 	return total.Total, nil

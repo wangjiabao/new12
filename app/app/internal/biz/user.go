@@ -136,13 +136,20 @@ type Config struct {
 }
 
 type UserBalance struct {
-	ID               int64
-	UserId           int64
-	BalanceUsdt      int64
-	BalanceDhb       int64
-	BalanceUsdtFloat float64
-	BalanceRawFloat  float64
-	BalanceC         int64
+	ID                     int64
+	UserId                 int64
+	BalanceUsdt            int64
+	BalanceDhb             int64
+	BalanceUsdtFloat       float64
+	BalanceRawFloat        float64
+	BalanceC               int64
+	AreaTotalFloat         float64
+	AreaTotalFloatTwo      float64
+	RecommendTotalFloat    float64
+	RecommendLevelFloat    float64
+	RecommendTotalFloatTwo float64
+	AllFloat               float64
+	LocationTotalFloat     float64
 }
 
 type Withdraw struct {
@@ -316,6 +323,7 @@ type UserBalanceRepo interface {
 	GetUserBalanceRecordCsdTotal(ctx context.Context) (int64, error)
 	GetUserBalanceRecordHbsTotal(ctx context.Context) (int64, error)
 	GetUserBalanceRecordUsdtTotalToday(ctx context.Context) (int64, error)
+	GetUserBalanceRecordCountTotalToday(ctx context.Context) (int64, error)
 	GetUserRewardLocationTotalToday(ctx context.Context, reason string) (int64, error)
 	GetSystemWithdrawUsdtFeeTotalToday(ctx context.Context) (int64, error)
 	GetUserWithdrawUsdtTotalToday(ctx context.Context) (float64, error)
@@ -433,6 +441,7 @@ type UserRepo interface {
 	UpdateAdminPassword(ctx context.Context, account string, password string) (*Admin, error)
 	GetUserAddressMap(ctx context.Context) (map[int64]*UserAddress, error)
 	GetGoodsMap(ctx context.Context) (map[int64]*Good, error)
+	GetAllUserBalance(ctx context.Context) ([]*UserBalance, error)
 }
 
 func NewUserUseCase(repo UserRepo, tx Transaction, configRepo ConfigRepo, uiRepo UserInfoRepo, urRepo UserRecommendRepo, locationRepo LocationRepo, userCurrentMonthRecommendRepo UserCurrentMonthRecommendRepo, ubRepo UserBalanceRepo, logger log.Logger) *UserUseCase {
@@ -884,21 +893,21 @@ func (uuc *UserUseCase) AdminUserList(ctx context.Context, req *v1.AdminUserList
 		tmpAreaMin := float64(0)
 		if _, ok := myLowUser[vUsers.ID]; ok {
 			tmpMyRecommendUserIdsLen = int64(len(myLowUser[vUsers.ID]))
-			if 1 < tmpMyRecommendUserIdsLen {
-				for _, vV := range myLowUser[vUsers.ID] {
-					if _, ok2 := usersMap[vV.UserId]; ok2 {
-						if tmpMax < usersMap[vV.UserId].MyTotalAmount+usersMap[vV.UserId].AmountUsdtOrigin {
-							tmpMax = usersMap[vV.UserId].MyTotalAmount + usersMap[vV.UserId].AmountUsdtOrigin
-						}
-					}
-				}
 
-				if 0 < tmpMax {
-					if vUsers.MyTotalAmount > tmpMax {
-						tmpAreaMin = vUsers.MyTotalAmount - tmpMax
+			for _, vV := range myLowUser[vUsers.ID] {
+				if _, ok2 := usersMap[vV.UserId]; ok2 {
+					if tmpMax < usersMap[vV.UserId].MyTotalAmount+usersMap[vV.UserId].AmountUsdtOrigin {
+						tmpMax = usersMap[vV.UserId].MyTotalAmount + usersMap[vV.UserId].AmountUsdtOrigin
 					}
 				}
 			}
+
+			if 0 < tmpMax {
+				if vUsers.MyTotalAmount > tmpMax {
+					tmpAreaMin = vUsers.MyTotalAmount - tmpMax
+				}
+			}
+
 		}
 
 		currentLevel := 0
@@ -2353,75 +2362,78 @@ func (uuc *UserUseCase) AdminAll(ctx context.Context, req *v1.AdminAllRequest) (
 	var (
 		userBalanceUsdtTotal            float64
 		userBalanceRecordUsdtTotal      int64
-		userBalanceRecordUsdtTotalTwo   int64
 		userBalanceRecordUsdtTotalToday int64
 		userWithdrawUsdtTotalToday      float64
 		userWithdrawUsdtTotal           float64
 		userBalanceDhbTotal             float64
 		userLocationCount               int64
-		//userRewardLocationTotal          int64
-		//userRewardRecommendTotal         int64
-		//userRewardRecommendLocationTotal int64
-		userWithdrawDhbTotalToday float64
-		userWithdrawDhbTotal      float64
+		userBalanceRecordTotalToday     int64
+		userWithdrawDhbTotalToday       float64
+		userWithdrawDhbTotal            float64
 	)
-	//userCount, _ = uuc.repo.GetUserCount(ctx)
-	//userTodayCount, _ = uuc.repo.GetUserCountToday(ctx)
 	userBalanceUsdtTotal, _ = uuc.ubRepo.GetUserBalanceUsdtTotal(ctx)
 	userBalanceDhbTotal, _ = uuc.ubRepo.GetUserBalanceDHBTotal(ctx)
-	//userLocationNewCurrentMaxNew, _ = uuc.ubRepo.GetUserLocationNewCurrentMaxNew(ctx)
-	//userLocationNewCurrentMax, _ = uuc.ubRepo.GetUserLocationNewCurrentMax(ctx)
-	//userLocationNewCurrent, _ = uuc.ubRepo.GetUserLocationNewCurrent(ctx)
-	//tmpUserLocationNewCurrent = userLocationNewCurrentMaxNew/100000000 + userLocationNewCurrentMax/100000000 - userLocationNewCurrent/100000000
-	//userBalanceLockUsdtTotal, _ = uuc.ubRepo.GetUserBalanceLockUsdtTotal(ctx)
 	userBalanceRecordUsdtTotal, _ = uuc.ubRepo.GetUserBalanceRecordUsdtTotal(ctx)
-	userBalanceRecordUsdtTotalTwo, _ = uuc.ubRepo.GetUserBalanceRecordUsdtTotalTwo(ctx)
-	//userBalanceRecordUsdtTotalThree, _ = uuc.ubRepo.GetUserBalanceRecordUsdtTotalThree(ctx)
-	//userBalanceRecordHbsTotal, _ = uuc.ubRepo.GetUserBalanceRecordHbsTotal(ctx)
-	//userBalanceRecordCsdTotal, _ = uuc.ubRepo.GetUserBalanceRecordCsdTotal(ctx)
 	userBalanceRecordUsdtTotalToday, _ = uuc.ubRepo.GetUserBalanceRecordUsdtTotalToday(ctx)
+	userBalanceRecordTotalToday, _ = uuc.ubRepo.GetUserBalanceRecordCountTotalToday(ctx)
 	userWithdrawUsdtTotalToday, _ = uuc.ubRepo.GetUserWithdrawUsdtTotalToday(ctx)
 	userWithdrawDhbTotalToday, _ = uuc.ubRepo.GetUserWithdrawDhbTotalToday(ctx)
 	userWithdrawUsdtTotal, _ = uuc.ubRepo.GetUserWithdrawUsdtTotal(ctx)
 	userWithdrawDhbTotal, _ = uuc.ubRepo.GetUserWithdrawDhbTotal(ctx)
-	//systemRewardUsdtTotal, _ = uuc.ubRepo.GetSystemRewardUsdtTotal(ctx)
 	userLocationCount = uuc.locationRepo.GetLocationUserCount(ctx)
 
-	//var (
-	//	err error
-	//)
-	//userRewardLocationTotal, err = uuc.ubRepo.GetUserRewardLocationTotalToday(ctx, "location")
-	//if nil != err {
-	//
-	//}
-	//userRewardRecommendTotal, err = uuc.ubRepo.GetUserRewardLocationTotalToday(ctx, "recommend")
-	//if nil != err {
-	//
-	//}
-	//userRewardAreaTotal, err = uuc.ubRepo.GetUserRewardLocationTotalToday(ctx, "area")
-	//if nil != err {
-	//
-	//}
-	//userRewardRecommendLocationTotal, err = uuc.ubRepo.GetUserRewardLocationTotalToday(ctx, "recommend_location")
-	//if nil != err {
-	//
-	//}
-	//balanceRewardRewarded, _ = uuc.ubRepo.GetUserRewardBalanceRewardTotal(ctx)
-	//balanceReward, _ = uuc.ubRepo.GetBalanceRewardTotal(ctx)
-	//amountCsd, _ = uuc.ubRepo.GetTradeOkkCsd(ctx)
-	//amountHbs, _ = uuc.ubRepo.GetTradeOkkHbs(ctx)
+	var (
+		err          error
+		users        []*User
+		userBalances []*UserBalance
+	)
+	users, err = uuc.repo.GetAllUsers(ctx)
+	if nil != err {
+		return nil, err
+	}
 
+	superTotal := int64(0)
+	for _, v := range users {
+		if 0 < v.AmountBiw {
+			superTotal += 1
+		}
+	}
+
+	TotalReward := float64(0)
+	TotalRewardNa := float64(0)
+	userBalances, err = uuc.repo.GetAllUserBalance(ctx)
+	if nil != err {
+		return nil, err
+	}
+	for _, v := range userBalances {
+		tmp := float64(0)
+
+		tmp += v.RecommendTotalFloatTwo
+		tmp += v.RecommendTotalFloat
+		tmp += v.LocationTotalFloat
+		tmp += v.AreaTotalFloat
+		tmp += v.AreaTotalFloatTwo
+
+		TotalRewardNa += tmp
+
+		tmp += v.RecommendLevelFloat
+		tmp += v.AllFloat
+
+		TotalReward += tmp
+	}
+
+	TotalRewardNa *= 0.25
 	return &v1.AdminAllReply{
-		// 激活人数，今日认购，全部认购，全部充值
+		// 激活人数，今日认购，全部认购，超级节点，今日入金人数，
 		TotalUser:      userLocationCount,
 		TodayLocation:  fmt.Sprintf("%.2f", float64(userBalanceRecordUsdtTotalToday)),
 		AllLocation:    fmt.Sprintf("%.2f", float64(userBalanceRecordUsdtTotal)),
-		AllLocationTwo: fmt.Sprintf("%.2f", float64(userBalanceRecordUsdtTotalTwo)),
+		SuperTotal:     superTotal,
+		TodayTotalUser: userBalanceRecordTotalToday,
 
-		//TodayLocationReward:          fmt.Sprintf("%.2f", float64(userRewardLocationTotal)/float64(100000)),
-		//TodayAreaReward:              fmt.Sprintf("%.2f", float64(userRewardRecommendTotal)/float64(100000)),
-		//TodayAllReward:               fmt.Sprintf("%.2f", float64(userRewardRecommendTotal)/float64(100000)),
-		//TodayRecommendLocationReward: fmt.Sprintf("%.2f", float64(userRewardRecommendLocationTotal)/float64(100000)),
+		TotalReward:     fmt.Sprintf("%.2f", TotalReward),
+		TotalNanaReward: fmt.Sprintf("%.2f", TotalRewardNa),
+		TodayNanaReward: "",
 
 		// 可提现余额，今日提现，全部提现
 		TotalUsdt:         fmt.Sprintf("%.2f", userBalanceUsdtTotal),
