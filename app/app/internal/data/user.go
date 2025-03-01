@@ -532,6 +532,7 @@ func (u *UserRepo) GetUserByUserIds(ctx context.Context, userIds ...int64) (map[
 			AmountUsdtGet:    item.AmountUsdtGet,
 			AmountUsdt:       item.AmountUsdt,
 			AmountUsdtOrigin: item.AmountUsdtOrigin,
+			MyTotalAmount:    item.MyTotalAmount,
 		}
 	}
 	return res, nil
@@ -718,6 +719,7 @@ func (u *UserRepo) GetUsers(ctx context.Context, b *biz.Pagination, address stri
 			Lock:             item.Lock,
 			AmountUsdtOrigin: item.AmountUsdtOrigin,
 			AmountUsdtGet:    item.AmountUsdtGet,
+			MyTotalAmount:    item.MyTotalAmount,
 		})
 	}
 	return res, nil, count

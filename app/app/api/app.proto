@@ -661,8 +661,9 @@ message AdminUserListReply { // 用户信息
 		int64 vip = 5; // 会员等级
 		int64 historyRecommend = 6; // 历史推荐人数
 		int64 amountUsdt = 12; // 充值usdt余额
-		int64 amountBiw = 13; // 购买节点
+		int64 amountBiw = 13; // 已购节点
 		int64 lock = 17;
+		int64 recommendLevel = 19; // 特殊奖励
 	}
 
 	int64 count = 2;
@@ -819,12 +820,10 @@ message AdminUserRecommendReply {
 	repeated List users = 1;
 	message List {
 		int64 user_id = 4;
-		string address = 3;
+		string address = 3; // 地址
 		int64  id = 2;
-		string created_at = 1;
-		string amount = 5;
-		string rel_amount = 6;
-		string recommend_all_amount = 7;
+		string created_at = 1; // 创建时间
+		string amount = 5; // 团队业绩
 	}
 }
 
