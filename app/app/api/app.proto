@@ -591,8 +591,8 @@ message AdminRewardListReply {
 		string address = 5; // 地址
 		// 原因 每一条替换文案
 		// 认购reason=buy，认购节点reason=buy_super,提现reason=withdraw，
-		// 兑换reason=exchange，静态reason=location，大小区reason=area，
-		// 平级reason=area_three，直推reason=recommend，直推二代reason=recommend_two，节点分红reason=all，
+		// 兑换reason=exchange，静态reason=location，团队reason=area，
+		// 平级reason=area_three，直推reason=recommend，直推二代reason=recommend_two，节点分红reason=all，特殊reason=recommend_level，
 		string reason = 6;
 		string addressTwo = 7; // 分享地址
 		int64 num = 8;		// 分享代数

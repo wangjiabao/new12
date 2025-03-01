@@ -542,14 +542,28 @@ func (uuc *UserUseCase) AdminRewardList(ctx context.Context, req *v1.AdminReward
 			tmpUser = "系统数据不需理会"
 		}
 
+		tmpLevel := int64(0)
+		tmpNum := int64(0)
+		if "area_three" == vUserReward.Reason || "area" == vUserReward.Reason {
+			tmpLevel = vUserReward.BalanceRecordId
+			tmpNum = vUserReward.ReasonLocationId
+		}
+
+		amountNew := "0"
+		if "buy_super" == vUserReward.Reason {
+			amountNew = fmt.Sprintf("%.2f", float64(vUserReward.Amount))
+		} else {
+			amountNew = fmt.Sprintf("%.2f", vUserReward.AmountNew)
+		}
+
 		res.Rewards = append(res.Rewards, &v1.AdminRewardListReply_List{
 			CreatedAt:  vUserReward.CreatedAt.Add(8 * time.Hour).Format("2006-01-02 15:04:05"),
-			Amount:     fmt.Sprintf("%.2f", vUserReward.AmountNew),
+			Amount:     amountNew,
 			AmountNana: fmt.Sprintf("%.2f", vUserReward.AmountNewTwo),
 			Address:    tmpUser,
 			Reason:     tmpReason,
-			Num:        vUserReward.ReasonLocationId,
-			Level:      vUserReward.BalanceRecordId,
+			Num:        tmpNum,   // 代数
+			Level:      tmpLevel, // 级别
 			AddressTwo: vUserReward.Address,
 		})
 	}
