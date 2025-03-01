@@ -4659,6 +4659,40 @@ func (u *UserRepo) GetUserAddressMap(ctx context.Context) (map[int64]*biz.UserAd
 	return res, nil
 }
 
+// GetGoods .
+func (ub *UserBalanceRepo) GetGoods(ctx context.Context, b *biz.Pagination) ([]*biz.Good, error, int64) {
+	var (
+		goods []*Good
+		count int64
+	)
+	res := make([]*biz.Good, 0)
+
+	instance := ub.data.db.Table("goods")
+
+	instance = instance.Count(&count)
+	if err := instance.Scopes(Paginate(b.PageNum, b.PageSize)).Order("id desc").Find(&goods).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return res, errors.NotFound("REWARD_NOT_FOUND", "reward not found"), 0
+		}
+
+		return nil, errors.New(500, "REWARD ERROR", err.Error()), 0
+	}
+
+	for _, v := range goods {
+		res = append(res, &biz.Good{
+			ID:        v.ID,
+			Name:      v.Name,
+			Detail:    v.Detail,
+			PicName:   v.PicName,
+			Amount:    v.Amount,
+			Status:    v.Status,
+			CreatedAt: v.CreatedAt,
+		})
+	}
+
+	return res, nil, count
+}
+
 // GetUserRewards .
 func (ub *UserBalanceRepo) GetUserRewards(ctx context.Context, b *biz.Pagination, userId int64, reason string) ([]*biz.Reward, error, int64) {
 	var (

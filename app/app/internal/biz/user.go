@@ -215,12 +215,13 @@ type UserArea struct {
 }
 
 type Good struct {
-	ID      int64
-	Name    string
-	Detail  string
-	PicName string
-	Amount  int64
-	Status  int64
+	ID        int64
+	Name      string
+	Detail    string
+	PicName   string
+	Amount    int64
+	Status    int64
+	CreatedAt time.Time
 }
 
 type PriceChange struct {
@@ -285,6 +286,7 @@ type UserBalanceRepo interface {
 	GetUserBalance(ctx context.Context, userId int64) (*UserBalance, error)
 	GetUserRewardByUserId(ctx context.Context, userId int64) ([]*Reward, error)
 	GetUserRewards(ctx context.Context, b *Pagination, userId int64, reason string) ([]*Reward, error, int64)
+	GetGoods(ctx context.Context, b *Pagination) ([]*Good, error, int64)
 	GetUserRewardsLastMonthFee(ctx context.Context) ([]*Reward, error)
 	GetUserBalanceByUserIds(ctx context.Context, userIds ...int64) (map[int64]*UserBalance, error)
 	GetUserBalanceLockByUserIds(ctx context.Context, userIds ...int64) (map[int64]*UserBalance, error)
@@ -657,6 +659,41 @@ func (uuc *UserUseCase) AdminTradeList(ctx context.Context, req *v1.AdminTradeLi
 	return res, nil
 }
 
+func (uuc *UserUseCase) AdminGoodList(ctx context.Context, req *v1.AdminGoodListRequest) (*v1.AdminGoodListReply, error) {
+	var (
+		goods []*Good
+		err   error
+		count int64
+	)
+
+	res := &v1.AdminGoodListReply{
+		Goods: make([]*v1.AdminGoodListReply_List, 0),
+	}
+
+	goods, err, count = uuc.ubRepo.GetGoods(ctx, &Pagination{
+		PageNum:  int(req.Page),
+		PageSize: 10,
+	})
+	if nil != err {
+		return res, nil
+	}
+	res.Count = count
+
+	for _, vGood := range goods {
+		res.Goods = append(res.Goods, &v1.AdminGoodListReply_List{
+			Id:        vGood.ID,
+			CreatedAt: vGood.CreatedAt.Add(8 * time.Hour).Format("2006-01-02 15:04:05"),
+			Name:      vGood.Name,
+			Detail:    vGood.Detail,
+			PicName:   vGood.PicName,
+			Amount:    uint64(vGood.Amount),
+			Status:    uint64(vGood.Status),
+		})
+	}
+
+	return res, err
+}
+
 func (uuc *UserUseCase) AdminBuyList(ctx context.Context, req *v1.AdminBuyListRequest) (*v1.AdminBuyListReply, error) {
 
 	var (
@@ -753,7 +790,7 @@ func (uuc *UserUseCase) AdminBuyList(ctx context.Context, req *v1.AdminBuyListRe
 		})
 	}
 
-	return nil, nil
+	return res, nil
 }
 
 func (uuc *UserUseCase) AdminUserList(ctx context.Context, req *v1.AdminUserListRequest) (*v1.AdminUserListReply, error) {
