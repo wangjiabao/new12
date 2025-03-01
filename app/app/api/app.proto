@@ -1123,13 +1123,10 @@ message AdminCreateAccountReply {
 }
 
 
-message AdminCreateGoodsRequest {
-	string name = 1;
-	string detail = 2;
-	uint64 amount = 3;
-}
+message AdminCreateGoodsRequest {}
 
-message AdminCreateGoodsReply {}
+message AdminCreateGoodsReply {
+}
 
 message AdminDailyLocationRewardRequest {
 	string date = 1;

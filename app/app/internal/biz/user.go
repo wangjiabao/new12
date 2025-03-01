@@ -1,7 +1,6 @@
 package biz
 
 import (
-	"bufio"
 	"context"
 	"crypto/md5"
 	v1 "dhb/app/app/api"
@@ -11,7 +10,6 @@ import (
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/middleware/auth/jwt"
 	jwt2 "github.com/golang-jwt/jwt/v4"
-	"google.golang.org/grpc/metadata"
 	"io"
 	"math"
 	"net/http"
@@ -3307,27 +3305,14 @@ func (uuc *UserUseCase) AdminRecommendLevelUpdate(ctx context.Context, req *v1.A
 
 // AdminCreateGoods 处理 HTTP 文件上传请求
 func (uuc *UserUseCase) AdminCreateGoods(ctx context.Context, req *v1.AdminCreateGoodsRequest) (*v1.AdminCreateGoodsReply, error) {
-	// 获取 HTTP 请求上下文
-	md, ok := metadata.FromIncomingContext(ctx)
+	// 从 ctx 获取 *http.Request
+	httpReq, ok := ctx.Value(http.Request{}).(*http.Request)
 	if !ok {
-		return nil, fmt.Errorf("missing metadata")
+		return nil, fmt.Errorf("failed to get http.Request from context")
 	}
 
-	// 获取 HTTP 请求对象
-	pairs := md.Get("grpcgateway-headers-bin")
-	if len(pairs) == 0 {
-		return nil, fmt.Errorf("invalid request")
-	}
-	reqHeader := pairs[0]
-
-	// 创建 HTTP 请求
-	httpReq, err := http.ReadRequest(bufio.NewReader(strings.NewReader(reqHeader)))
-	if err != nil {
-		return nil, fmt.Errorf("failed to read request: %w", err)
-	}
-
-	// 解析 multipart form
-	err = httpReq.ParseMultipartForm(10 << 20) // 限制 10MB
+	// 解析 `multipart/form-data`
+	err := httpReq.ParseMultipartForm(10 << 20) // 限制 10MB
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse form: %w", err)
 	}
@@ -3336,11 +3321,14 @@ func (uuc *UserUseCase) AdminCreateGoods(ctx context.Context, req *v1.AdminCreat
 	name := httpReq.FormValue("name")
 	detail := httpReq.FormValue("detail")
 	amountStr := httpReq.FormValue("amount")
-	amount, _ := strconv.ParseUint(amountStr, 10, 64)
+
+	amount, err := strconv.ParseUint(amountStr, 10, 64)
+	if err != nil {
+		return nil, fmt.Errorf("invalid amount: %w", err)
+	}
 
 	fmt.Println(name, detail, amount)
-
-	// 读取文件
+	// 读取上传文件
 	file, handler, err := httpReq.FormFile("file")
 	if err != nil {
 		return nil, fmt.Errorf("failed to get file: %w", err)
@@ -3349,18 +3337,17 @@ func (uuc *UserUseCase) AdminCreateGoods(ctx context.Context, req *v1.AdminCreat
 
 	// 存储文件
 	savePath := "/www/wwwroot/www.nanaplay.net/pic/"
-	os.MkdirAll(savePath, os.ModePerm) // 创建目录
+	os.MkdirAll(savePath, os.ModePerm) // 确保目录存在
 	filePath := filepath.Join(savePath, handler.Filename)
 	dst, err := os.Create(filePath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create file: %w", err)
+		return nil, fmt.Errorf("failed to save file: %w", err)
 	}
 	defer dst.Close()
 
-	// 保存文件数据
 	_, err = io.Copy(dst, file)
 	if err != nil {
-		return nil, fmt.Errorf("failed to save file: %w", err)
+		return nil, fmt.Errorf("failed to write file: %w", err)
 	}
 
 	fmt.Printf("File uploaded: %s\n", filePath)

@@ -1599,13 +1599,7 @@ components:
             properties: {}
         AdminCreateGoodsRequest:
             type: object
-            properties:
-                name:
-                    type: string
-                detail:
-                    type: string
-                amount:
-                    type: string
+            properties: {}
         AdminDailyAddMoneyReply:
             type: object
             properties: {}
