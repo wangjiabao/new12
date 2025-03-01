@@ -720,20 +720,24 @@ func (uuc *UserUseCase) AdminUserList(ctx context.Context, req *v1.AdminUserList
 
 		tmpMyRecommendUserIdsLen := int64(0)
 		tmpMax := float64(0)
+		tmpAreaMin := float64(0)
 		if _, ok := myLowUser[vUsers.ID]; ok {
 			tmpMyRecommendUserIdsLen = int64(len(myLowUser[vUsers.ID]))
-			for _, vV := range myLowUser[vUsers.ID] {
-				if _, ok2 := usersMap[vV.UserId]; ok2 {
-					if tmpMax < usersMap[vV.UserId].MyTotalAmount {
-						tmpMax = usersMap[vV.UserId].MyTotalAmount
+			if 1 < tmpMyRecommendUserIdsLen {
+				for _, vV := range myLowUser[vUsers.ID] {
+					if _, ok2 := usersMap[vV.UserId]; ok2 {
+						if tmpMax < usersMap[vV.UserId].MyTotalAmount+usersMap[vV.UserId].AmountUsdtOrigin {
+							tmpMax = usersMap[vV.UserId].MyTotalAmount + usersMap[vV.UserId].AmountUsdtOrigin
+						}
+					}
+				}
+
+				if 0 < tmpMax {
+					if vUsers.MyTotalAmount > tmpMax {
+						tmpAreaMin = vUsers.MyTotalAmount - tmpMax
 					}
 				}
 			}
-		}
-
-		tmpAreaMin := float64(0)
-		if vUsers.MyTotalAmount > tmpMax {
-			tmpAreaMin = vUsers.MyTotalAmount - tmpMax
 		}
 
 		currentLevel := 0
@@ -754,21 +758,23 @@ func (uuc *UserUseCase) AdminUserList(ctx context.Context, req *v1.AdminUserList
 		}
 
 		res.Users = append(res.Users, &v1.AdminUserListReply_UserList{
-			UserId:           vUsers.ID,
-			CreatedAt:        vUsers.CreatedAt.Add(8 * time.Hour).Format("2006-01-02 15:04:05"),
-			Address:          vUsers.Address,
-			BalanceUsdt:      fmt.Sprintf("%.2f", userBalances[vUsers.ID].BalanceUsdtFloat),
-			BalanceDhb:       fmt.Sprintf("%.2f", userBalances[vUsers.ID].BalanceRawFloat),
-			Vip:              int64(currentLevel),
-			Out:              vUsers.OutRate,
-			HistoryRecommend: tmpMyRecommendUserIdsLen,
-			AreaTotal:        vUsers.MyTotalAmount,
-			AreaMax:          tmpMax,
-			AreaMin:          tmpAreaMin,
-			AmountBiw:        int64(vUsers.AmountBiw),
-			AmountUsdt:       int64(vUsers.Amount),
-			Lock:             vUsers.Lock,
-			RecommendLevel:   vUsers.RecommendLevel,
+			UserId:            vUsers.ID,
+			CreatedAt:         vUsers.CreatedAt.Add(8 * time.Hour).Format("2006-01-02 15:04:05"),
+			Address:           vUsers.Address,
+			BalanceUsdt:       fmt.Sprintf("%.2f", userBalances[vUsers.ID].BalanceUsdtFloat),
+			BalanceDhb:        fmt.Sprintf("%.2f", userBalances[vUsers.ID].BalanceRawFloat),
+			Vip:               int64(currentLevel),
+			Out:               vUsers.OutRate,
+			HistoryRecommend:  tmpMyRecommendUserIdsLen,
+			AreaTotal:         vUsers.MyTotalAmount,
+			AreaMax:           tmpMax,
+			AreaMin:           tmpAreaMin,
+			AmountBiw:         int64(vUsers.AmountBiw),
+			AmountUsdt:        int64(vUsers.Amount),
+			Lock:              vUsers.Lock,
+			RecommendLevel:    vUsers.RecommendLevel,
+			AmountUsdtGet:     fmt.Sprintf("%.2f", vUsers.AmountUsdtGet),
+			AmountUsdtCurrent: fmt.Sprintf("%.2f", vUsers.AmountUsdt),
 		})
 	}
 
@@ -2966,8 +2972,8 @@ func (uuc *UserUseCase) AdminDailyLocationReward(ctx context.Context, req *v1.Ad
 					continue
 				}
 
-				if tmpAreaMax < usersMap[vMyLowUser.UserId].MyTotalAmount {
-					tmpAreaMax = usersMap[vMyLowUser.UserId].MyTotalAmount
+				if tmpAreaMax < usersMap[vMyLowUser.UserId].MyTotalAmount+usersMap[vMyLowUser.UserId].AmountUsdtOrigin {
+					tmpAreaMax = usersMap[vMyLowUser.UserId].MyTotalAmount + usersMap[vMyLowUser.UserId].AmountUsdtOrigin
 					tmpMaxId = vMyLowUser.UserId
 				}
 			}
@@ -2979,7 +2985,7 @@ func (uuc *UserUseCase) AdminDailyLocationReward(ctx context.Context, req *v1.Ad
 			tmpAreaMin := float64(0)
 			for _, vMyLowUser := range myLowUser[tmpUserId] {
 				if tmpMaxId != vMyLowUser.UserId {
-					tmpAreaMin += usersMap[vMyLowUser.UserId].MyTotalAmount
+					tmpAreaMin += usersMap[vMyLowUser.UserId].MyTotalAmount + usersMap[vMyLowUser.UserId].AmountUsdtOrigin
 				}
 			}
 

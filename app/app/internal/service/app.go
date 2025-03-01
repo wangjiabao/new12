@@ -800,7 +800,7 @@ func (a *AppService) DepositWithdraw(ctx context.Context, req *v1.DepositRequest
 
 		needUsers := make([]*biz.User, 0)
 		for _, user := range users {
-			if 0 < user.Last {
+			if 0 < user.LastDeposit {
 				needUsers = append(needUsers, user)
 			}
 		}
