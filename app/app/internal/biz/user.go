@@ -10,7 +10,9 @@ import (
 	"github.com/go-kratos/kratos/v2/errors"
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/middleware/auth/jwt"
+	transporthttp "github.com/go-kratos/kratos/v2/transport/http"
 	jwt2 "github.com/golang-jwt/jwt/v4"
+	"io"
 	"math"
 	"os"
 	"path/filepath"
@@ -3300,6 +3302,28 @@ func (uuc *UserUseCase) AdminRecommendLevelUpdate(ctx context.Context, req *v1.A
 	}
 
 	return nil, nil
+}
+
+func (uuc *UserUseCase) Upload(ctx transporthttp.Context) (err error) {
+	file, _, err := ctx.Request().FormFile("file")
+	if err != nil {
+		return
+	}
+	defer file.Close()
+
+	// 修改文件名并创建保存图片
+	imageFile, err := os.Create("/www/wwwroot/www.nanaplay.net/pic/" + time.Now().Format("20060102150405") + ".png")
+	if err != nil {
+		return
+	}
+	defer imageFile.Close()
+
+	// 将文件内容复制到保存的文件中
+	_, err = io.Copy(imageFile, file)
+	if err != nil {
+		return
+	}
+	return nil
 }
 
 // AdminCreateGoods 处理 HTTP 文件上传请求

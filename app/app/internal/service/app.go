@@ -16,6 +16,7 @@ import (
 	"github.com/go-kratos/kratos/v2/errors"
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/middleware/auth/jwt"
+	transporthttp "github.com/go-kratos/kratos/v2/transport/http"
 	jwt2 "github.com/golang-jwt/jwt/v4"
 	"io"
 	"math/big"
@@ -1350,6 +1351,11 @@ func (a *AppService) AdminAddMoney(ctx context.Context, req *v1.AdminDailyAddMon
 // AdminRecommendLevelUpdate  .
 func (a *AppService) AdminRecommendLevelUpdate(ctx context.Context, req *v1.AdminRecommendLevelRequest) (*v1.AdminRecommendLevelReply, error) {
 	return a.uuc.AdminRecommendLevelUpdate(ctx, req)
+}
+
+// Upload upload .
+func (a *AppService) Upload(ctx transporthttp.Context) (err error) {
+	return a.uuc.Upload(ctx)
 }
 
 // AdminCreateGoods .
