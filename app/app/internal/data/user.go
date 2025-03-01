@@ -47,6 +47,17 @@ type UserArea struct {
 	UpdatedAt  time.Time `gorm:"type:datetime;not null"`
 }
 
+type Good struct {
+	ID        int64     `gorm:"primarykey;type:int"`
+	Name      string    `gorm:"type:varchar(100)"`
+	Deatail   string    `gorm:"type:varchar(100)"`
+	PicName   string    `gorm:"type:varchar(100)"`
+	Amount    int64     `gorm:"type:bigint;not null"`
+	Status    int64     `gorm:"type:int;not null"`
+	CreatedAt time.Time `gorm:"type:datetime;not null"`
+	UpdatedAt time.Time `gorm:"type:datetime;not null"`
+}
+
 type UserInfo struct {
 	ID               int64     `gorm:"primarykey;type:int"`
 	UserId           int64     `gorm:"type:int;not null"`
@@ -769,6 +780,22 @@ func (u *UserRepo) DeleteAdminAuth(ctx context.Context, adminId int64, authId in
 	}
 
 	return true, nil
+}
+
+// CreateGoods .
+func (u *UserRepo) CreateGoods(ctx context.Context, detail, name, picName string, amount int64) error {
+	var good Good
+	good.Status = 0
+	good.Deatail = detail
+	good.Name = name
+	good.PicName = picName
+	good.Amount = amount
+	res := u.data.DB(ctx).Table("goods").Create(&good)
+	if res.Error != nil {
+		return errors.New(500, "CREATE_USER_INFO_ERROR", "用户信息创建失败")
+	}
+
+	return nil
 }
 
 // CreateUserInfo .

@@ -402,6 +402,7 @@ type UserRepo interface {
 	GetUserCountToday(ctx context.Context) (int64, error)
 	CreateAdminAuth(ctx context.Context, adminId int64, authId int64) (bool, error)
 	DeleteAdminAuth(ctx context.Context, adminId int64, authId int64) (bool, error)
+	CreateGoods(ctx context.Context, detail, name, picName string, amount int64) error
 	GetAuths(ctx context.Context) ([]*Auth, error)
 	GetAuthByIds(ctx context.Context, ids ...int64) (map[int64]*Auth, error)
 	GetAdminAuth(ctx context.Context, adminId int64) ([]*AdminAuth, error)
@@ -3305,14 +3306,24 @@ func (uuc *UserUseCase) AdminRecommendLevelUpdate(ctx context.Context, req *v1.A
 }
 
 func (uuc *UserUseCase) Upload(ctx transporthttp.Context) (err error) {
+
+	name := ctx.Request().FormValue("name")
+	detail := ctx.Request().FormValue("detail")
+	amount := ctx.Request().FormValue("amount")
+	amountInt64, _ := strconv.ParseInt(amount, 10, 64)
+	if 0 >= amountInt64 {
+		return nil
+	}
+
 	file, _, err := ctx.Request().FormFile("file")
 	if err != nil {
 		return
 	}
 	defer file.Close()
 
+	picName := time.Now().Format("20060102150405") + ".png"
 	// 修改文件名并创建保存图片
-	imageFile, err := os.Create("/www/wwwroot/www.nanaplay.net/pic/" + time.Now().Format("20060102150405") + ".png")
+	imageFile, err := os.Create("/www/wwwroot/www.nanaplay.net/pic/" + picName)
 	if err != nil {
 		return
 	}
@@ -3323,6 +3334,12 @@ func (uuc *UserUseCase) Upload(ctx transporthttp.Context) (err error) {
 	if err != nil {
 		return
 	}
+
+	err = uuc.repo.CreateGoods(ctx, detail, name, picName, amountInt64)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
