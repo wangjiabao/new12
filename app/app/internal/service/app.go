@@ -2053,6 +2053,10 @@ func (a *AppService) AdminTradeList(ctx context.Context, req *v1.AdminTradeListR
 	return a.uuc.AdminTradeList(ctx, req)
 }
 
+func (a *AppService) AdminBuyList(ctx context.Context, req *v1.AdminBuyListRequest) (*v1.AdminBuyListReply, error) {
+	return nil, nil
+}
+
 func (a *AppService) AdminUserList(ctx context.Context, req *v1.AdminUserListRequest) (*v1.AdminUserListReply, error) {
 	return a.uuc.AdminUserList(ctx, req)
 }
