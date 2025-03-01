@@ -434,7 +434,7 @@ service App {
 	rpc AdminCreateGoods (AdminCreateGoodsRequest) returns (AdminCreateGoodsReply) {
 		option (google.api.http) = {
 			post: "/api/admin_dhb/create_goods"
-			body: "*"
+			body: "send_body"
 		};
 	};
 }
@@ -1123,7 +1123,15 @@ message AdminCreateAccountReply {
 }
 
 
-message AdminCreateGoodsRequest {}
+message AdminCreateGoodsRequest {
+	message SendBody {
+		string name = 1;
+		string detail = 2;
+		uint64 amount = 3;
+		string file = 5; // Base64 编码的文件
+	}
+	SendBody send_body = 1;
+}
 
 message AdminCreateGoodsReply {
 }

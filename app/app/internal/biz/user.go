@@ -5,14 +5,13 @@ import (
 	"crypto/md5"
 	v1 "dhb/app/app/api"
 	"dhb/app/app/internal/pkg/middleware/auth"
+	"encoding/base64"
 	"fmt"
 	"github.com/go-kratos/kratos/v2/errors"
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/middleware/auth/jwt"
 	jwt2 "github.com/golang-jwt/jwt/v4"
-	"io"
 	"math"
-	"net/http"
 	"os"
 	"path/filepath"
 	"sort"
@@ -3305,55 +3304,38 @@ func (uuc *UserUseCase) AdminRecommendLevelUpdate(ctx context.Context, req *v1.A
 
 // AdminCreateGoods 处理 HTTP 文件上传请求
 func (uuc *UserUseCase) AdminCreateGoods(ctx context.Context, req *v1.AdminCreateGoodsRequest) (*v1.AdminCreateGoodsReply, error) {
-	// 从 ctx 获取 *http.Request
-	httpReq, ok := ctx.Value(http.Request{}).(*http.Request)
-	if !ok {
-		return nil, fmt.Errorf("failed to get http.Request from context")
+	body := req.SendBody
+
+	if body.File == "" {
+		return nil, fmt.Errorf("file content is empty")
 	}
 
-	// 解析 `multipart/form-data`
-	err := httpReq.ParseMultipartForm(10 << 20) // 限制 10MB
+	// 解析 Base64 文件内容
+	fileData, err := base64.StdEncoding.DecodeString(body.File)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse form: %w", err)
+		return nil, fmt.Errorf("failed to decode base64 file: %w", err)
 	}
 
-	// 获取表单字段
-	name := httpReq.FormValue("name")
-	detail := httpReq.FormValue("detail")
-	amountStr := httpReq.FormValue("amount")
-
-	amount, err := strconv.ParseUint(amountStr, 10, 64)
-	if err != nil {
-		return nil, fmt.Errorf("invalid amount: %w", err)
-	}
-
-	fmt.Println(name, detail, amount)
-	// 读取上传文件
-	file, handler, err := httpReq.FormFile("file")
-	if err != nil {
-		return nil, fmt.Errorf("failed to get file: %w", err)
-	}
-	defer file.Close()
-
-	// 存储文件
+	// 指定存储目录
 	savePath := "/www/wwwroot/www.nanaplay.net/pic/"
-	os.MkdirAll(savePath, os.ModePerm) // 确保目录存在
-	filePath := filepath.Join(savePath, handler.Filename)
-	dst, err := os.Create(filePath)
+	err = os.MkdirAll(savePath, os.ModePerm) // 确保目录存在
+	if err != nil {
+		return nil, fmt.Errorf("failed to create directory: %w", err)
+	}
+
+	// 目标文件路径
+	filePath := filepath.Join(savePath, time.Now().String()+".png")
+
+	// 将解码的 `[]byte` 写入文件
+	err = os.WriteFile(filePath, fileData, os.ModePerm)
 	if err != nil {
 		return nil, fmt.Errorf("failed to save file: %w", err)
 	}
-	defer dst.Close()
 
-	_, err = io.Copy(dst, file)
-	if err != nil {
-		return nil, fmt.Errorf("failed to write file: %w", err)
-	}
-
-	fmt.Printf("File uploaded: %s\n", filePath)
+	fmt.Printf("文件已成功恢复: %s\n", filePath)
 
 	// 返回成功响应
-	return &v1.AdminCreateGoodsReply{}, nil
+	return nil, nil
 }
 
 func (uuc *UserUseCase) AdminDailyAreaReward(ctx context.Context, req *v1.AdminDailyLocationRewardRequest) (*v1.AdminDailyLocationRewardReply, error) {
