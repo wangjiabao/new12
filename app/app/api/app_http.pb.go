@@ -225,7 +225,7 @@ func RegisterAppHTTPServer(s *http.Server, srv AppHTTPServer) {
 	r.GET("/api/admin_dhb/test_money", _App_TestMoney0_HTTP_Handler(srv))
 	r.POST("/api/admin_dhb/vip_lock", _App_LockUser0_HTTP_Handler(srv))
 	r.POST("/api/admin_dhb/admin_recommend_level", _App_AdminRecommendLevelUpdate0_HTTP_Handler(srv))
-	r.POST("/api/admin_dhb/create_goods", _App_AdminCreateGoods0_HTTP_Handler(srv))
+	r.POST("/api/admin_dhb/update_goods", _App_AdminCreateGoods0_HTTP_Handler(srv))
 }
 
 func _App_UserInfo0_HTTP_Handler(srv AppHTTPServer) func(ctx http.Context) error {
@@ -1752,7 +1752,7 @@ func (c *AppHTTPClientImpl) AdminCreateAccount(ctx context.Context, in *AdminCre
 
 func (c *AppHTTPClientImpl) AdminCreateGoods(ctx context.Context, in *AdminCreateGoodsRequest, opts ...http.CallOption) (*AdminCreateGoodsReply, error) {
 	var out AdminCreateGoodsReply
-	pattern := "/api/admin_dhb/create_goods"
+	pattern := "/api/admin_dhb/update_goods"
 	path := binding.EncodeURL(pattern, in, false)
 	opts = append(opts, http.Operation(OperationAppAdminCreateGoods))
 	opts = append(opts, http.PathTemplate(pattern))

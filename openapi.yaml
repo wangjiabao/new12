@@ -382,30 +382,6 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Status'
-    /api/admin_dhb/create_goods:
-        post:
-            tags:
-                - App
-            operationId: App_AdminCreateGoods
-            requestBody:
-                content:
-                    application/json:
-                        schema:
-                            $ref: '#/components/schemas/AdminCreateGoodsRequest_SendBody'
-                required: true
-            responses:
-                "200":
-                    description: OK
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/AdminCreateGoodsReply'
-                default:
-                    description: Default error response
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/Status'
     /api/admin_dhb/daily_area_reward:
         get:
             tags:
@@ -1095,6 +1071,30 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Status'
+    /api/admin_dhb/update_goods:
+        post:
+            tags:
+                - App
+            operationId: App_AdminCreateGoods
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/AdminCreateGoodsRequest_SendBody'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/AdminCreateGoodsReply'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
     /api/admin_dhb/user_auth_list:
         get:
             tags:
@@ -1600,13 +1600,9 @@ components:
         AdminCreateGoodsRequest_SendBody:
             type: object
             properties:
-                name:
+                id:
                     type: string
-                detail:
-                    type: string
-                amount:
-                    type: string
-                file:
+                status:
                     type: string
         AdminDailyAddMoneyReply:
             type: object

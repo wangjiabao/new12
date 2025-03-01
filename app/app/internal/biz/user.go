@@ -5,7 +5,6 @@ import (
 	"crypto/md5"
 	v1 "dhb/app/app/api"
 	"dhb/app/app/internal/pkg/middleware/auth"
-	"encoding/base64"
 	"fmt"
 	"github.com/go-kratos/kratos/v2/errors"
 	"github.com/go-kratos/kratos/v2/log"
@@ -15,7 +14,6 @@ import (
 	"io"
 	"math"
 	"os"
-	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
@@ -403,6 +401,7 @@ type UserRepo interface {
 	CreateAdminAuth(ctx context.Context, adminId int64, authId int64) (bool, error)
 	DeleteAdminAuth(ctx context.Context, adminId int64, authId int64) (bool, error)
 	CreateGoods(ctx context.Context, detail, name, picName string, amount int64) error
+	UpdateGoods(ctx context.Context, id, status uint64) error
 	GetAuths(ctx context.Context) ([]*Auth, error)
 	GetAuthByIds(ctx context.Context, ids ...int64) (map[int64]*Auth, error)
 	GetAdminAuth(ctx context.Context, adminId int64) ([]*AdminAuth, error)
@@ -3345,38 +3344,7 @@ func (uuc *UserUseCase) Upload(ctx transporthttp.Context) (err error) {
 
 // AdminCreateGoods 处理 HTTP 文件上传请求
 func (uuc *UserUseCase) AdminCreateGoods(ctx context.Context, req *v1.AdminCreateGoodsRequest) (*v1.AdminCreateGoodsReply, error) {
-	body := req.SendBody
-
-	if body.File == "" {
-		return nil, fmt.Errorf("file content is empty")
-	}
-
-	// 解析 Base64 文件内容
-	fileData, err := base64.StdEncoding.DecodeString(body.File)
-	if err != nil {
-		return nil, fmt.Errorf("failed to decode base64 file: %w", err)
-	}
-
-	// 指定存储目录
-	savePath := "/www/wwwroot/www.nanaplay.net/pic/"
-	err = os.MkdirAll(savePath, os.ModePerm) // 确保目录存在
-	if err != nil {
-		return nil, fmt.Errorf("failed to create directory: %w", err)
-	}
-
-	// 目标文件路径
-	filePath := filepath.Join(savePath, time.Now().String()+".png")
-
-	// 将解码的 `[]byte` 写入文件
-	err = os.WriteFile(filePath, fileData, os.ModePerm)
-	if err != nil {
-		return nil, fmt.Errorf("failed to save file: %w", err)
-	}
-
-	fmt.Printf("文件已成功恢复: %s\n", filePath)
-
-	// 返回成功响应
-	return nil, nil
+	return nil, uuc.repo.UpdateGoods(ctx, req.SendBody.Id, req.SendBody.Status)
 }
 
 func (uuc *UserUseCase) AdminDailyAreaReward(ctx context.Context, req *v1.AdminDailyLocationRewardRequest) (*v1.AdminDailyLocationRewardReply, error) {

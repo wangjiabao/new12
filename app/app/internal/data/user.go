@@ -50,7 +50,7 @@ type UserArea struct {
 type Good struct {
 	ID        int64     `gorm:"primarykey;type:int"`
 	Name      string    `gorm:"type:varchar(100)"`
-	Deatail   string    `gorm:"type:varchar(100)"`
+	Detail    string    `gorm:"type:varchar(100)"`
 	PicName   string    `gorm:"type:varchar(100)"`
 	Amount    int64     `gorm:"type:bigint;not null"`
 	Status    int64     `gorm:"type:int;not null"`
@@ -782,11 +782,25 @@ func (u *UserRepo) DeleteAdminAuth(ctx context.Context, adminId int64, authId in
 	return true, nil
 }
 
+// UpdateGoods .
+func (u *UserRepo) UpdateGoods(ctx context.Context, id, status uint64) error {
+	var (
+		err error
+	)
+	if err = u.data.DB(ctx).Table("goods").
+		Where("id=?", id).
+		Updates(map[string]interface{}{"status": status}).Error; nil != err {
+		return errors.NotFound("goods err", "goods not found")
+	}
+
+	return nil
+}
+
 // CreateGoods .
 func (u *UserRepo) CreateGoods(ctx context.Context, detail, name, picName string, amount int64) error {
 	var good Good
 	good.Status = 0
-	good.Deatail = detail
+	good.Detail = detail
 	good.Name = name
 	good.PicName = picName
 	good.Amount = amount
