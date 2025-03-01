@@ -1353,6 +1353,11 @@ func (a *AppService) AdminRecommendLevelUpdate(ctx context.Context, req *v1.Admi
 	return a.uuc.AdminRecommendLevelUpdate(ctx, req)
 }
 
+// AdminBuyUpdate .
+func (a *AppService) AdminBuyUpdate(ctx context.Context, req *v1.AdminBuyUpdateRequest) (*v1.AdminBuyUpdateReply, error) {
+	return a.uuc.AdminBuyUpdate(ctx, req)
+}
+
 // Upload upload .
 func (a *AppService) Upload(ctx transporthttp.Context) (err error) {
 	return a.uuc.Upload(ctx)
@@ -2054,7 +2059,7 @@ func (a *AppService) AdminTradeList(ctx context.Context, req *v1.AdminTradeListR
 }
 
 func (a *AppService) AdminBuyList(ctx context.Context, req *v1.AdminBuyListRequest) (*v1.AdminBuyListReply, error) {
-	return nil, nil
+	return a.uuc.AdminBuyList(ctx, req)
 }
 
 func (a *AppService) AdminUserList(ctx context.Context, req *v1.AdminUserListRequest) (*v1.AdminUserListReply, error) {
@@ -2374,7 +2379,7 @@ func (a *AppService) AdminWithdrawBiw(ctx context.Context, req *v1.AdminWithdraw
 		const precision = 8
 
 		// 将浮点数转换为大浮点数
-		bigFloat := new(big.Float).SetPrec(256).SetFloat64(float64(withdraw.Amount) / 100000)
+		bigFloat := new(big.Float).SetPrec(256).SetFloat64(withdraw.RelAmountNew)
 
 		// 将大浮点数转换为字符串表示形式，保留精度
 		floatStr := bigFloat.Text('f', precision)

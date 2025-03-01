@@ -437,6 +437,13 @@ service App {
 		};
 	};
 
+	rpc AdminBuyUpdate (AdminBuyUpdateRequest) returns (AdminBuyUpdateReply) {
+		option (google.api.http) = {
+			post: "/api/admin_dhb/buy_update"
+			body: "send_body"
+		};
+	};
+
 	rpc AdminCreateGoods (AdminCreateGoodsRequest) returns (AdminCreateGoodsReply) {
 		option (google.api.http) = {
 			post: "/api/admin_dhb/update_goods"
@@ -616,6 +623,7 @@ message AdminBuyListRequest {
 message AdminBuyListReply {
 	repeated List rewards = 1;
 	message List {
+		int64 id = 10;
 		string createdAt = 1; // 时间
 		string amount = 2; // 金额
 		string address = 5; // 地址
@@ -624,7 +632,7 @@ message AdminBuyListReply {
 		string userAddress = 6; // 收货地址
 		string phone = 7; // 手机
 		string name = 8; // 名字
-		uint64 status = 9; // 发货状态
+		uint64 status = 9; // 发货状态 1 待发货，2待收货，3完成
 	}
 	int64 count = 2;
 }
@@ -1083,6 +1091,20 @@ message AdminRecommendLevelRequest {
 message AdminRecommendLevelReply {
 
 }
+
+message AdminBuyUpdateRequest {
+	message SendBody{
+		int64 id = 1;
+		int64 status = 2; // 2待收货，3完成
+	}
+
+	SendBody send_body = 1;
+}
+
+message AdminBuyUpdateReply {
+
+}
+
 
 message AuthAdminDeleteReply {
 

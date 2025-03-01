@@ -45,6 +45,19 @@ type User struct {
 	CreatedAt              time.Time
 }
 
+type UserAddress struct {
+	ID        int64
+	UserId    int64
+	A         string
+	B         string
+	C         string
+	D         string
+	Phone     string
+	Status    uint64
+	Name      string
+	CreatedAt time.Time
+}
+
 type Admin struct {
 	ID       int64
 	Password string
@@ -199,6 +212,15 @@ type UserArea struct {
 	Amount     int64
 	SelfAmount int64
 	Level      int64
+}
+
+type Good struct {
+	ID      int64
+	Name    string
+	Detail  string
+	PicName string
+	Amount  int64
+	Status  int64
 }
 
 type PriceChange struct {
@@ -369,6 +391,7 @@ type UserInfoRepo interface {
 	UpdateTotalOne(ctx context.Context, amountUsdt float64) error
 	UpdateUserNewTwoNewThree(ctx context.Context, userId int64, amount uint64, last int64, coinType string) error
 	UpdateUserRecommendLevel(ctx context.Context, userId int64, level uint64) error
+	UpdateBuyStatus(ctx context.Context, id int64, status uint64) error
 	UpdateUserLast(ctx context.Context, userId int64, coinType string) error
 	CreateUserInfo(ctx context.Context, u *User) (*UserInfo, error)
 	GetUserInfoByUserId(ctx context.Context, userId int64) (*UserInfo, error)
@@ -406,6 +429,8 @@ type UserRepo interface {
 	GetAuthByIds(ctx context.Context, ids ...int64) (map[int64]*Auth, error)
 	GetAdminAuth(ctx context.Context, adminId int64) ([]*AdminAuth, error)
 	UpdateAdminPassword(ctx context.Context, account string, password string) (*Admin, error)
+	GetUserAddressMap(ctx context.Context) (map[int64]*UserAddress, error)
+	GetGoodsMap(ctx context.Context) (map[int64]*Good, error)
 }
 
 func NewUserUseCase(repo UserRepo, tx Transaction, configRepo ConfigRepo, uiRepo UserInfoRepo, urRepo UserRecommendRepo, locationRepo LocationRepo, userCurrentMonthRecommendRepo UserCurrentMonthRecommendRepo, ubRepo UserBalanceRepo, logger log.Logger) *UserUseCase {
@@ -630,6 +655,105 @@ func (uuc *UserUseCase) AdminTradeList(ctx context.Context, req *v1.AdminTradeLi
 	}
 
 	return res, nil
+}
+
+func (uuc *UserUseCase) AdminBuyList(ctx context.Context, req *v1.AdminBuyListRequest) (*v1.AdminBuyListReply, error) {
+
+	var (
+		userSearch  *User
+		userId      int64 = 0
+		userRewards []*Reward
+		users       map[int64]*User
+		userIdsMap  map[int64]int64
+		userIds     []int64
+		err         error
+		count       int64
+	)
+	res := &v1.AdminBuyListReply{
+		Rewards: make([]*v1.AdminBuyListReply_List, 0),
+	}
+
+	// 地址查询
+	if "" != req.Address {
+		userSearch, err = uuc.repo.GetUserByAddress(ctx, req.Address)
+		if nil != err {
+			return res, nil
+		}
+		userId = userSearch.ID
+	}
+
+	userRewards, err, count = uuc.ubRepo.GetUserRewards(ctx, &Pagination{
+		PageNum:  int(req.Page),
+		PageSize: 10,
+	}, userId, "buy")
+	if nil != err {
+		return res, nil
+	}
+	res.Count = count
+
+	userIdsMap = make(map[int64]int64, 0)
+	for _, vUserReward := range userRewards {
+		userIdsMap[vUserReward.UserId] = vUserReward.UserId
+	}
+	for _, v := range userIdsMap {
+		userIds = append(userIds, v)
+	}
+
+	var (
+		userAddressMap map[int64]*UserAddress
+	)
+	userAddressMap, err = uuc.repo.GetUserAddressMap(ctx)
+	if nil != err {
+		return res, nil
+	}
+
+	var (
+		goods map[int64]*Good
+	)
+	goods, err = uuc.repo.GetGoodsMap(ctx)
+	if nil != err {
+		return res, nil
+	}
+
+	users, err = uuc.repo.GetUserByUserIds(ctx, userIds...)
+	for _, vUserReward := range userRewards {
+		tmpUser := ""
+		if nil != users {
+			if _, ok := users[vUserReward.UserId]; ok {
+				tmpUser = users[vUserReward.UserId].Address
+			}
+		}
+		userAddress := ""
+		phone := ""
+		name := ""
+		if _, ok := userAddressMap[vUserReward.Amount]; ok {
+			userAddress = userAddressMap[vUserReward.Amount].A + userAddressMap[vUserReward.Amount].B + userAddressMap[vUserReward.Amount].C + userAddressMap[vUserReward.Amount].D
+			phone = userAddressMap[vUserReward.Amount].Phone
+			name = userAddressMap[vUserReward.Amount].Name
+		}
+
+		goodName := ""
+		goodPic := ""
+		if _, ok := goods[vUserReward.AmountB]; ok {
+			goodName = goods[vUserReward.AmountB].Name
+			goodPic = goods[vUserReward.AmountB].PicName
+		}
+
+		res.Rewards = append(res.Rewards, &v1.AdminBuyListReply_List{
+			CreatedAt:   vUserReward.CreatedAt.Add(8 * time.Hour).Format("2006-01-02 15:04:05"),
+			Amount:      fmt.Sprintf("%.2f", vUserReward.AmountNew),
+			Address:     tmpUser,
+			GoodName:    goodName,
+			GoodPic:     goodPic,
+			UserAddress: userAddress,
+			Phone:       phone,
+			Name:        name,
+			Status:      uint64(vUserReward.Status),
+			Id:          vUserReward.ID,
+		})
+	}
+
+	return nil, nil
 }
 
 func (uuc *UserUseCase) AdminUserList(ctx context.Context, req *v1.AdminUserListRequest) (*v1.AdminUserListReply, error) {
@@ -3252,6 +3376,20 @@ func (uuc *UserUseCase) AdminAddMoney(ctx context.Context, req *v1.AdminDailyAdd
 
 		return nil
 	}); nil != err {
+		return nil, err
+	}
+
+	return nil, nil
+}
+
+// AdminBuyUpdate .
+func (uuc *UserUseCase) AdminBuyUpdate(ctx context.Context, req *v1.AdminBuyUpdateRequest) (*v1.AdminBuyUpdateReply, error) {
+	var (
+		err error
+	)
+
+	err = uuc.uiRepo.UpdateBuyStatus(ctx, req.SendBody.Id, uint64(req.SendBody.Status))
+	if nil != err {
 		return nil, err
 	}
 

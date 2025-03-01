@@ -88,6 +88,20 @@ type UserCurrentMonthRecommend struct {
 	UpdatedAt       time.Time `gorm:"type:datetime;not null"`
 }
 
+type UserAddress struct {
+	ID        int64     `gorm:"primarykey;type:int"`
+	UserId    int64     `gorm:"type:int;not null"`
+	A         string    `gorm:"type:varchar(200);not null"`
+	B         string    `gorm:"type:varchar(200);not null"`
+	C         string    `gorm:"type:varchar(200);not null"`
+	D         string    `gorm:"type:varchar(200);not null"`
+	Phone     string    `gorm:"type:varchar(45);not null"`
+	Name      string    `gorm:"type:varchar(45);not null"`
+	Status    uint64    `gorm:"type:int;not null"`
+	CreatedAt time.Time `gorm:"type:datetime;not null"`
+	UpdatedAt time.Time `gorm:"type:datetime;not null"`
+}
+
 type Config struct {
 	ID        int64     `gorm:"primarykey;type:int"`
 	Name      string    `gorm:"type:varchar(45);not null"`
@@ -2987,6 +3001,17 @@ func (ui *UserInfoRepo) UpdateUserRecommendLevel(ctx context.Context, userId int
 	return nil
 }
 
+// UpdateBuyStatus .
+func (ui *UserInfoRepo) UpdateBuyStatus(ctx context.Context, id int64, status uint64) error {
+	res := ui.data.DB(ctx).Table("reward").Where("id=?", id).
+		Updates(map[string]interface{}{"status": status})
+	if res.Error != nil {
+		return errors.New(500, "UPDATE_USER_ERROR", "buy修改失败")
+	}
+
+	return nil
+}
+
 // UpdateUserLast .
 func (ui *UserInfoRepo) UpdateUserLast(ctx context.Context, userId int64, coinType string) error {
 	if "USDT" == coinType {
@@ -4576,6 +4601,62 @@ func (ub *UserBalanceRepo) GetUserTrades(ctx context.Context, b *biz.Pagination,
 	}
 
 	return res, nil, count
+}
+
+// GetGoodsMap .
+func (u *UserRepo) GetGoodsMap(ctx context.Context) (map[int64]*biz.Good, error) {
+	var goods []*Good
+	res := make(map[int64]*biz.Good, 0)
+	if err := u.data.db.Table("goods").Find(&goods).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+
+		return res, errors.New(500, "USER ERROR", err.Error())
+	}
+
+	for _, v := range goods {
+		res[v.ID] = &biz.Good{
+			ID:      0,
+			Name:    v.Name,
+			Detail:  v.Detail,
+			PicName: v.PicName,
+			Amount:  v.Amount,
+			Status:  v.Status,
+		}
+	}
+
+	return res, nil
+}
+
+// GetUserAddressMap .
+func (u *UserRepo) GetUserAddressMap(ctx context.Context) (map[int64]*biz.UserAddress, error) {
+	var userAddress []*UserAddress
+	res := make(map[int64]*biz.UserAddress, 0)
+	if err := u.data.db.Table("user_address").Find(&userAddress).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+
+		return res, errors.New(500, "USER ERROR", err.Error())
+	}
+
+	for _, v := range userAddress {
+		res[v.ID] = &biz.UserAddress{
+			ID:        v.ID,
+			UserId:    v.UserId,
+			A:         v.A,
+			B:         v.B,
+			C:         v.C,
+			D:         v.D,
+			Phone:     v.Phone,
+			Status:    v.Status,
+			CreatedAt: v.CreatedAt,
+			Name:      v.Name,
+		}
+	}
+
+	return res, nil
 }
 
 // GetUserRewards .

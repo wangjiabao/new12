@@ -238,6 +238,30 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Status'
+    /api/admin_dhb/buy_update:
+        post:
+            tags:
+                - App
+            operationId: App_AdminBuyUpdate
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/AdminBuyUpdateRequest_SendBody'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/AdminBuyUpdateReply'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
     /api/admin_dhb/change_password:
         post:
             tags:
@@ -1582,6 +1606,8 @@ components:
         AdminBuyListReply_List:
             type: object
             properties:
+                id:
+                    type: string
                 createdAt:
                     type: string
                 amount:
@@ -1597,6 +1623,16 @@ components:
                 phone:
                     type: string
                 name:
+                    type: string
+                status:
+                    type: string
+        AdminBuyUpdateReply:
+            type: object
+            properties: {}
+        AdminBuyUpdateRequest_SendBody:
+            type: object
+            properties:
+                id:
                     type: string
                 status:
                     type: string
