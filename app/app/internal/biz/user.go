@@ -1,6 +1,7 @@
 package biz
 
 import (
+	"bytes"
 	"context"
 	"crypto/md5"
 	v1 "dhb/app/app/api"
@@ -10,7 +11,10 @@ import (
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/middleware/auth/jwt"
 	jwt2 "github.com/golang-jwt/jwt/v4"
+	"io"
 	"math"
+	"os"
+	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
@@ -3296,6 +3300,53 @@ func (uuc *UserUseCase) AdminRecommendLevelUpdate(ctx context.Context, req *v1.A
 		return nil, err
 	}
 
+	return nil, nil
+}
+
+func (uuc *UserUseCase) SaveFile(file io.Reader, filename string) (string, error) {
+	// 设置文件存储路径
+	savePath := "/www/wwwroot/www.nanaplay.net/pic"
+	if err := os.MkdirAll(savePath, os.ModePerm); err != nil {
+		return "", fmt.Errorf("failed to create directory: %w", err)
+	}
+
+	// 创建目标文件
+	dstPath := filepath.Join(savePath, filename)
+	dst, err := os.Create(dstPath)
+	if err != nil {
+		return "", fmt.Errorf("failed to create file: %w", err)
+	}
+	defer dst.Close()
+
+	// 将上传的文件内容写入目标文件
+	if _, err := io.Copy(dst, file); err != nil {
+		return "", fmt.Errorf("failed to save file: %w", err)
+	}
+
+	return dstPath, nil
+}
+
+// AdminCreateGoods 处理 HTTP 文件上传请求
+func (uuc *UserUseCase) AdminCreateGoods(ctx context.Context, req *v1.AdminCreateGoodsRequest) (*v1.AdminCreateGoodsReply, error) {
+	// 确保请求中有文件
+	if req.SendBody == nil || len(req.SendBody.File) == 0 {
+		return nil, fmt.Errorf("no file uploaded")
+	}
+
+	// 使用文件名（假设请求中包含文件名字段）
+	filename := time.Now().String() + ".png"
+	// 将 []byte 转换为 io.Reader
+	fileReader := bytes.NewReader(req.SendBody.File)
+
+	// 调用 SaveFile 方法存储文件
+	filePath, err := uuc.SaveFile(fileReader, filename)
+	if err != nil {
+		return nil, fmt.Errorf("failed to save file: %w", err)
+	}
+
+	fmt.Println(filePath)
+
+	// 返回成功响应
 	return nil, nil
 }
 

@@ -430,6 +430,13 @@ service App {
 			body: "send_body"
 		};
 	};
+
+	rpc AdminCreateGoods (AdminCreateGoodsRequest) returns ( AdminCreateGoodsReply) {
+		option (google.api.http) = {
+			post: "/api/admin_dhb/create_goods"
+			body: "send_body"
+		};
+	};
 }
 
 message EthAuthorizeRequest {
@@ -1112,6 +1119,22 @@ message AdminCreateAccountRequest {
 }
 
 message AdminCreateAccountReply {
+
+}
+
+
+message AdminCreateGoodsRequest {
+	message SendBody{
+		string name = 1;
+		string detail = 3;
+		uint64 amount = 2;
+		bytes file = 4;
+	}
+
+	SendBody send_body = 1;
+}
+
+message AdminCreateGoodsReply {
 
 }
 

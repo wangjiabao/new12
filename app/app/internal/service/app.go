@@ -1352,6 +1352,11 @@ func (a *AppService) AdminRecommendLevelUpdate(ctx context.Context, req *v1.Admi
 	return a.uuc.AdminRecommendLevelUpdate(ctx, req)
 }
 
+// AdminCreateGoods .
+func (a *AppService) AdminCreateGoods(ctx context.Context, req *v1.AdminCreateGoodsRequest) (*v1.AdminCreateGoodsReply, error) {
+	return a.uuc.AdminCreateGoods(ctx, req)
+}
+
 // Deposit5 deposit5.
 func (a *AppService) Deposit5(ctx context.Context, req *v1.DepositRequest) (*v1.DepositReply, error) {
 	//
