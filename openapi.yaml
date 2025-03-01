@@ -391,7 +391,7 @@ paths:
                 content:
                     application/json:
                         schema:
-                            $ref: '#/components/schemas/AdminCreateGoodsRequest_SendBody'
+                            $ref: '#/components/schemas/AdminCreateGoodsRequest'
                 required: true
             responses:
                 "200":
@@ -1597,7 +1597,7 @@ components:
         AdminCreateGoodsReply:
             type: object
             properties: {}
-        AdminCreateGoodsRequest_SendBody:
+        AdminCreateGoodsRequest:
             type: object
             properties:
                 name:
@@ -1606,9 +1606,6 @@ components:
                     type: string
                 amount:
                     type: string
-                file:
-                    type: string
-                    format: bytes
         AdminDailyAddMoneyReply:
             type: object
             properties: {}

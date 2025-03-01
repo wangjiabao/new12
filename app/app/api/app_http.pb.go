@@ -1536,7 +1536,7 @@ func _App_AdminRecommendLevelUpdate0_HTTP_Handler(srv AppHTTPServer) func(ctx ht
 func _App_AdminCreateGoods0_HTTP_Handler(srv AppHTTPServer) func(ctx http.Context) error {
 	return func(ctx http.Context) error {
 		var in AdminCreateGoodsRequest
-		if err := ctx.Bind(&in.SendBody); err != nil {
+		if err := ctx.Bind(&in); err != nil {
 			return err
 		}
 		if err := ctx.BindQuery(&in); err != nil {
@@ -1756,7 +1756,7 @@ func (c *AppHTTPClientImpl) AdminCreateGoods(ctx context.Context, in *AdminCreat
 	path := binding.EncodeURL(pattern, in, false)
 	opts = append(opts, http.Operation(OperationAppAdminCreateGoods))
 	opts = append(opts, http.PathTemplate(pattern))
-	err := c.cc.Invoke(ctx, "POST", path, in.SendBody, &out, opts...)
+	err := c.cc.Invoke(ctx, "POST", path, in, &out, opts...)
 	if err != nil {
 		return nil, err
 	}

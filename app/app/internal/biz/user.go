@@ -1,7 +1,7 @@
 package biz
 
 import (
-	"bytes"
+	"bufio"
 	"context"
 	"crypto/md5"
 	v1 "dhb/app/app/api"
@@ -11,8 +11,10 @@ import (
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/middleware/auth/jwt"
 	jwt2 "github.com/golang-jwt/jwt/v4"
+	"google.golang.org/grpc/metadata"
 	"io"
 	"math"
+	"net/http"
 	"os"
 	"path/filepath"
 	"sort"
@@ -3303,51 +3305,68 @@ func (uuc *UserUseCase) AdminRecommendLevelUpdate(ctx context.Context, req *v1.A
 	return nil, nil
 }
 
-func (uuc *UserUseCase) SaveFile(file io.Reader, filename string) (string, error) {
-	// 设置文件存储路径
-	savePath := "/www/wwwroot/www.nanaplay.net/pic"
-	if err := os.MkdirAll(savePath, os.ModePerm); err != nil {
-		return "", fmt.Errorf("failed to create directory: %w", err)
+// AdminCreateGoods 处理 HTTP 文件上传请求
+func (uuc *UserUseCase) AdminCreateGoods(ctx context.Context, req *v1.AdminCreateGoodsRequest) (*v1.AdminCreateGoodsReply, error) {
+	// 获取 HTTP 请求上下文
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return nil, fmt.Errorf("missing metadata")
 	}
 
-	// 创建目标文件
-	dstPath := filepath.Join(savePath, filename)
-	dst, err := os.Create(dstPath)
+	// 获取 HTTP 请求对象
+	pairs := md.Get("grpcgateway-headers-bin")
+	if len(pairs) == 0 {
+		return nil, fmt.Errorf("invalid request")
+	}
+	reqHeader := pairs[0]
+
+	// 创建 HTTP 请求
+	httpReq, err := http.ReadRequest(bufio.NewReader(strings.NewReader(reqHeader)))
 	if err != nil {
-		return "", fmt.Errorf("failed to create file: %w", err)
+		return nil, fmt.Errorf("failed to read request: %w", err)
+	}
+
+	// 解析 multipart form
+	err = httpReq.ParseMultipartForm(10 << 20) // 限制 10MB
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse form: %w", err)
+	}
+
+	// 获取表单字段
+	name := httpReq.FormValue("name")
+	detail := httpReq.FormValue("detail")
+	amountStr := httpReq.FormValue("amount")
+	amount, _ := strconv.ParseUint(amountStr, 10, 64)
+
+	fmt.Println(name, detail, amount)
+
+	// 读取文件
+	file, handler, err := httpReq.FormFile("file")
+	if err != nil {
+		return nil, fmt.Errorf("failed to get file: %w", err)
+	}
+	defer file.Close()
+
+	// 存储文件
+	savePath := "/www/wwwroot/www.nanaplay.net/pic/"
+	os.MkdirAll(savePath, os.ModePerm) // 创建目录
+	filePath := filepath.Join(savePath, handler.Filename)
+	dst, err := os.Create(filePath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create file: %w", err)
 	}
 	defer dst.Close()
 
-	// 将上传的文件内容写入目标文件
-	if _, err := io.Copy(dst, file); err != nil {
-		return "", fmt.Errorf("failed to save file: %w", err)
-	}
-
-	return dstPath, nil
-}
-
-// AdminCreateGoods 处理 HTTP 文件上传请求
-func (uuc *UserUseCase) AdminCreateGoods(ctx context.Context, req *v1.AdminCreateGoodsRequest) (*v1.AdminCreateGoodsReply, error) {
-	// 确保请求中有文件
-	if req.SendBody == nil || len(req.SendBody.File) == 0 {
-		return nil, fmt.Errorf("no file uploaded")
-	}
-
-	// 使用文件名（假设请求中包含文件名字段）
-	filename := time.Now().String() + ".png"
-	// 将 []byte 转换为 io.Reader
-	fileReader := bytes.NewReader(req.SendBody.File)
-
-	// 调用 SaveFile 方法存储文件
-	filePath, err := uuc.SaveFile(fileReader, filename)
+	// 保存文件数据
+	_, err = io.Copy(dst, file)
 	if err != nil {
 		return nil, fmt.Errorf("failed to save file: %w", err)
 	}
 
-	fmt.Println(filePath)
+	fmt.Printf("File uploaded: %s\n", filePath)
 
 	// 返回成功响应
-	return nil, nil
+	return &v1.AdminCreateGoodsReply{}, nil
 }
 
 func (uuc *UserUseCase) AdminDailyAreaReward(ctx context.Context, req *v1.AdminDailyLocationRewardRequest) (*v1.AdminDailyLocationRewardReply, error) {
