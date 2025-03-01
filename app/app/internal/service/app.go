@@ -2502,7 +2502,13 @@ func (a *AppService) AdminWithdrawEth(ctx context.Context, req *v1.AdminWithdraw
 			continue
 		}
 
-		withDrawAmount := strconv.FormatFloat(withdraw.RelAmountNew, 'f', -1, 64) // 补八个0.系统基础1是10个0
+		tmp := int64(withdraw.RelAmountNew)
+		if 0 >= tmp {
+			fmt.Println("转化后小于等于0", tmp, withdraw.RelAmountNew)
+		}
+
+		withDrawAmount := strconv.FormatInt(tmp, 10) // 补八个0.系统基础1是10个0
+		withDrawAmount += "000000000000000000"
 		tmpUrl1 := "https://bsc-dataseed4.binance.org/"
 		for i := 0; i <= 5; i++ {
 			//fmt.Println(11111, user.ToAddress, v.Amount, balanceInt)
