@@ -3166,7 +3166,7 @@ func (uuc *UserUseCase) AdminDailyLocationReward(ctx context.Context, req *v1.Ad
 	}
 
 	for _, buy := range buys {
-		buyAmount += buy.AmountNew
+		buyAmount += buy.AmountNew * 0.7
 	}
 
 	if 1 < allLevel {
