@@ -891,6 +891,7 @@ func (uuc *UserUseCase) AdminUserList(ctx context.Context, req *v1.AdminUserList
 		tmpMyRecommendUserIdsLen := int64(0)
 		tmpMax := float64(0)
 		tmpAreaMin := float64(0)
+
 		if _, ok := myLowUser[vUsers.ID]; ok {
 			tmpMyRecommendUserIdsLen = int64(len(myLowUser[vUsers.ID]))
 
@@ -907,23 +908,22 @@ func (uuc *UserUseCase) AdminUserList(ctx context.Context, req *v1.AdminUserList
 					tmpAreaMin = vUsers.MyTotalAmount - tmpMax
 				}
 			}
-
 		}
 
 		currentLevel := 0
-		if 3000 <= tmpAreaMin {
+		if 3000 <= vUsers.MyTotalAmount {
 			currentLevel = 1
-		} else if 7000 <= tmpAreaMin {
+		} else if 7000 <= vUsers.MyTotalAmount {
 			currentLevel = 2
-		} else if 21000 <= tmpAreaMin {
+		} else if 21000 <= vUsers.MyTotalAmount {
 			currentLevel = 3
-		} else if 63000 <= tmpAreaMin {
+		} else if 63000 <= vUsers.MyTotalAmount {
 			currentLevel = 4
-		} else if 190000 <= tmpAreaMin {
+		} else if 190000 <= vUsers.MyTotalAmount {
 			currentLevel = 5
-		} else if 570000 <= tmpAreaMin {
+		} else if 570000 <= vUsers.MyTotalAmount {
 			currentLevel = 6
-		} else if 1710000 <= tmpAreaMin {
+		} else if 1710000 <= vUsers.MyTotalAmount {
 			currentLevel = 7
 		}
 
@@ -3092,7 +3092,9 @@ func (uuc *UserUseCase) AdminDailyLocationReward(ctx context.Context, req *v1.Ad
 		lastLevelNum := float64(0)
 		tmpLevelLevel := 0
 		tmpI := 0
-		for i := len(tmpRecommendUserIds) - 1; i >= 0; i-- {
+		lastKey := len(tmpRecommendUserIds) - 1
+
+		for i := lastKey; i >= 0; i-- {
 			tmpI++
 
 			currentLevel := 0
@@ -3151,37 +3153,55 @@ func (uuc *UserUseCase) AdminDailyLocationReward(ctx context.Context, req *v1.Ad
 				}
 			}
 
+			// 我的大区的用户id
 			if 0 >= tmpMaxId {
 				continue
 			}
 
-			tmpAreaMin := float64(0)
-			for _, vMyLowUser := range myLowUser[tmpUserId] {
-				if tmpMaxId != vMyLowUser.UserId {
-					tmpAreaMin += usersMap[vMyLowUser.UserId].MyTotalAmount + usersMap[vMyLowUser.UserId].AmountUsdt
+			// 如果是我大区的人，不拿，当前人的下级是不是大区的用户id
+			if i == lastKey {
+				// 直推，是我的大区
+				if tmpMaxId == v.ID {
+					continue
+				}
+			} else {
+				if i+1 > lastKey {
+					fmt.Println("错误分红小区，信息缺失44：", err, tmpUserId, lastKey, i+1, v)
+					continue
+				}
+
+				tmpLastUserId, _ := strconv.ParseInt(tmpRecommendUserIds[i+1], 10, 64) // 最后一位是直推人
+				if 0 >= tmpLastUserId {
+					fmt.Println("错误分红小区，信息缺失445：", err, tmpUserId, lastKey, i+1, v)
+					continue
+				}
+
+				// 是我大区的人，跳过
+				if tmpMaxId == tmpLastUserId {
+					continue
 				}
 			}
 
 			tmpLastLevelNum := float64(0)
-			if 3000 <= tmpAreaMin {
+			if 3000 <= usersMap[tmpUserId].MyTotalAmount {
 				currentLevel = 1
 				tmpLastLevelNum = vv1
-			} else if 7000 <= tmpAreaMin {
+			} else if 7000 <= usersMap[tmpUserId].MyTotalAmount {
 				currentLevel = 2
 				tmpLastLevelNum = v2
-			} else if 21000 <= tmpAreaMin {
+			} else if 21000 <= usersMap[tmpUserId].MyTotalAmount {
 				currentLevel = 3
 				tmpLastLevelNum = v3
-			} else if 63000 <= tmpAreaMin {
+			} else if 63000 <= usersMap[tmpUserId].MyTotalAmount {
 				currentLevel = 4
 				tmpLastLevelNum = v4
-			} else if 190000 <= tmpAreaMin {
+			} else if 190000 <= usersMap[tmpUserId].MyTotalAmount {
 				currentLevel = 5
 				tmpLastLevelNum = v5
-			} else if 570000 <= tmpAreaMin {
+			} else if 570000 <= usersMap[tmpUserId].MyTotalAmount {
 				currentLevel = 6
 				tmpLastLevelNum = v6
-			} else if 1710000 <= tmpAreaMin {
+			} else if 1710000 <= usersMap[tmpUserId].MyTotalAmount {
 				currentLevel = 7
 				tmpLastLevelNum = v7
 			} else {
