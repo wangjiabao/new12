@@ -896,8 +896,8 @@ func (uuc *UserUseCase) AdminUserList(ctx context.Context, req *v1.AdminUserList
 
 			for _, vV := range myLowUser[vUsers.ID] {
 				if _, ok2 := usersMap[vV.UserId]; ok2 {
-					if tmpMax < usersMap[vV.UserId].MyTotalAmount+usersMap[vV.UserId].AmountUsdtOrigin {
-						tmpMax = usersMap[vV.UserId].MyTotalAmount + usersMap[vV.UserId].AmountUsdtOrigin
+					if tmpMax < usersMap[vV.UserId].MyTotalAmount+usersMap[vV.UserId].AmountUsdt {
+						tmpMax = usersMap[vV.UserId].MyTotalAmount + usersMap[vV.UserId].AmountUsdt
 					}
 				}
 			}
@@ -3047,7 +3047,7 @@ func (uuc *UserUseCase) AdminDailyLocationReward(ctx context.Context, req *v1.Ad
 						}
 
 						// 减掉业绩
-						err = uuc.uiRepo.UpdateUserMyTotalAmount(ctx, myUserRecommendUserId, v.AmountUsdtOrigin)
+						err = uuc.uiRepo.UpdateUserMyTotalAmount(ctx, myUserRecommendUserId, v.AmountUsdt)
 						if err != nil {
 							fmt.Println("错误分红静态：", err, v)
 						}
@@ -3145,8 +3145,8 @@ func (uuc *UserUseCase) AdminDailyLocationReward(ctx context.Context, req *v1.Ad
 					continue
 				}
 
-				if tmpAreaMax < usersMap[vMyLowUser.UserId].MyTotalAmount+usersMap[vMyLowUser.UserId].AmountUsdtOrigin {
-					tmpAreaMax = usersMap[vMyLowUser.UserId].MyTotalAmount + usersMap[vMyLowUser.UserId].AmountUsdtOrigin
+				if tmpAreaMax < usersMap[vMyLowUser.UserId].MyTotalAmount+usersMap[vMyLowUser.UserId].AmountUsdt {
+					tmpAreaMax = usersMap[vMyLowUser.UserId].MyTotalAmount + usersMap[vMyLowUser.UserId].AmountUsdt
 					tmpMaxId = vMyLowUser.UserId
 				}
 			}
@@ -3158,7 +3158,7 @@ func (uuc *UserUseCase) AdminDailyLocationReward(ctx context.Context, req *v1.Ad
 			tmpAreaMin := float64(0)
 			for _, vMyLowUser := range myLowUser[tmpUserId] {
 				if tmpMaxId != vMyLowUser.UserId {
-					tmpAreaMin += usersMap[vMyLowUser.UserId].MyTotalAmount + usersMap[vMyLowUser.UserId].AmountUsdtOrigin
+					tmpAreaMin += usersMap[vMyLowUser.UserId].MyTotalAmount + usersMap[vMyLowUser.UserId].AmountUsdt
 				}
 			}
 
