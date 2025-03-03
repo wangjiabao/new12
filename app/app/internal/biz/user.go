@@ -231,6 +231,16 @@ type Good struct {
 	CreatedAt time.Time
 }
 
+type Goods struct {
+	ID        int64
+	Amount    uint64
+	Name      string
+	PicName   string
+	Detail    string
+	Status    uint64
+	CreatedAt time.Time
+}
+
 type PriceChange struct {
 	ID        int64
 	Origin    int64
@@ -389,6 +399,15 @@ type UserCurrentMonthRecommendRepo interface {
 }
 
 type UserInfoRepo interface {
+	UpdateUserRewardRecommend3(ctx context.Context, userId, recommendUserId int64, userAddress string, amountUsdtAll float64, amountUsdt float64, amountNana float64, amountUsdtOrigin float64, recommendTwo, stop bool) (int64, error)
+	UpdateUserRewardRecommend2(ctx context.Context, userId, recommendUserId int64, userAddress string, amountUsdt float64) (int64, error)
+	GetUserRecommendByUserId(ctx context.Context, userId int64) (*UserRecommend, error)
+	UpdateUserNewTwoNew(ctx context.Context, userId int64, amount float64, num, amountOrigin uint64, buyType, addressId, goodId uint64, coinType string) error
+	UpdateUserNewSuper(ctx context.Context, userId int64, amount, num int64) error
+	GetAllUsers(ctx context.Context) ([]*User, error)
+	GetUserRecommends(ctx context.Context) ([]*UserRecommend, error)
+	GetGoods(ctx context.Context) ([]*Goods, error)
+	GetUserAddress(ctx context.Context, userId uint64) ([]*UserAddress, error)
 	UpdateUserNewTwoNewTwoTwo(ctx context.Context, userId int64, amount uint64, last uint64, coinType string) error
 	UpdateUserNewTwoNewTwo(ctx context.Context, userId int64, amountRaw float64) error
 	UpdateUserReward(ctx context.Context, userId int64, amountUsdtAll float64, amountUsdt float64, amountNana float64, amountUsdtOrigin float64, stop bool) (int64, error)
@@ -398,6 +417,7 @@ type UserInfoRepo interface {
 	UpdateUserRewardAreaTwo(ctx context.Context, userId int64, amountUsdt float64, stop bool) (int64, error)
 	UpdateUserRewardRecommendUserGet(ctx context.Context, userId int64, amountUsdt float64, enough bool, amount float64) error
 	UpdateUserMyTotalAmount(ctx context.Context, userId int64, amountUsdt float64) error
+	UpdateUserMyTotalAmountAdd(ctx context.Context, userId int64, amountUsdt float64) error
 	UpdateTotalOne(ctx context.Context, amountUsdt float64) error
 	UpdateUserNewTwoNewThree(ctx context.Context, userId int64, amount uint64, last int64, coinType string) error
 	UpdateUserRecommendLevel(ctx context.Context, userId int64, level uint64) error

@@ -5,6 +5,7 @@ import (
 	v1 "dhb/app/app/api"
 	"fmt"
 	"github.com/go-kratos/kratos/v2/log"
+	"math"
 	"strconv"
 	"strings"
 	"time"
@@ -88,6 +89,7 @@ type EthUserRecordRepo interface {
 	GetEthUserRecordListByHash(ctx context.Context, hash ...string) (map[string]*EthUserRecord, error)
 	GetEthUserRecordListByHash2(ctx context.Context, hash ...string) (map[string]*EthUserRecord, error)
 	GetEthUserRecordLast(ctx context.Context) (int64, error)
+	GetUserLastDeposit(ctx context.Context) (uint64, error)
 	GetEthUserRecordLast2(ctx context.Context) (int64, error)
 	CreateEthUserRecordListByHash(ctx context.Context, r *EthUserRecord) (*EthUserRecord, error)
 	CreateEthUserRecordListByHash2(ctx context.Context, r *EthUserRecord) (*EthUserRecord, error)
@@ -185,6 +187,10 @@ func (ruc *RecordUseCase) GetEthUserRecordLast(ctx context.Context) (int64, erro
 	return ruc.ethUserRecordRepo.GetEthUserRecordLast(ctx)
 }
 
+func (ruc *RecordUseCase) GetUserLastDeposit(ctx context.Context) (uint64, error) {
+	return ruc.ethUserRecordRepo.GetUserLastDeposit(ctx)
+}
+
 func (ruc *RecordUseCase) GetEthUserRecordLast2(ctx context.Context) (int64, error) {
 	return ruc.ethUserRecordRepo.GetEthUserRecordLast2(ctx)
 }
@@ -193,7 +199,350 @@ func (ruc *RecordUseCase) GetGlobalLock(ctx context.Context) (*GlobalLock, error
 	return ruc.locationRepo.GetLockGlobalLocation(ctx)
 }
 
-func (ruc *RecordUseCase) DepositNew(ctx context.Context, userId int64, amount uint64, last uint64, eth *EthUserRecord) error {
+func (ruc *RecordUseCase) BuySuper(ctx context.Context, user *User, num int64) error {
+	var (
+		err     error
+		configs []*Config
+		lockAll uint64
+	)
+
+	// 配置
+	configs, _ = ruc.configRepo.GetConfigByKeys(ctx, "lock_all")
+	if nil != configs {
+		for _, vConfig := range configs {
+			if "lock_all" == vConfig.KeyName {
+				lockAll, _ = strconv.ParseUint(vConfig.Value, 10, 64)
+			}
+		}
+	}
+
+	if 1 == lockAll {
+		return nil
+	}
+
+	if err = ruc.tx.ExecTx(ctx, func(ctx context.Context) error { // 事务
+		err = ruc.userInfoRepo.UpdateUserNewSuper(ctx, user.ID, int64(1000), num)
+		if nil != err {
+			return err
+		}
+
+		return nil
+	}); nil != err {
+		fmt.Println(err, "错误投资3,super")
+		return err
+	}
+
+	return nil
+}
+
+func (ruc *RecordUseCase) DepositNew(ctx context.Context, userId, goodId, addressId int64, amount uint64, eth *EthUserRecord) error {
+	var (
+		err              error
+		goods            []*Goods
+		goodsMap         map[int64]*Goods
+		configs          []*Config
+		recommend        float64
+		recommendLevel   float64
+		recommendTwo     float64
+		bPrice           float64
+		rewardUsdtRate   float64
+		exchangeNanaRate float64
+	)
+
+	// 配置
+	configs, _ = ruc.configRepo.GetConfigByKeys(ctx, "b_price", "recommend", "recommend_level", "recommend_two", "reward_usdt_rate", "exchange_nana_rate")
+	if nil != configs {
+		for _, vConfig := range configs {
+			if "recommend_two" == vConfig.KeyName {
+				recommendTwo, _ = strconv.ParseFloat(vConfig.Value, 10)
+			} else if "recommend" == vConfig.KeyName {
+				recommend, _ = strconv.ParseFloat(vConfig.Value, 10)
+			} else if "recommend_level" == vConfig.KeyName {
+				recommendLevel, _ = strconv.ParseFloat(vConfig.Value, 10)
+			} else if "b_price" == vConfig.KeyName {
+				bPrice, _ = strconv.ParseFloat(vConfig.Value, 10)
+			} else if "reward_usdt_rate" == vConfig.KeyName {
+				rewardUsdtRate, _ = strconv.ParseFloat(vConfig.Value, 10)
+			} else if "exchange_nana_rate" == vConfig.KeyName {
+				exchangeNanaRate, _ = strconv.ParseFloat(vConfig.Value, 10)
+			}
+		}
+	}
+
+	goods, err = ruc.userInfoRepo.GetGoods(ctx)
+	if nil != err {
+		fmt.Println("认购查询商品错误")
+		return nil
+	}
+
+	goodsMap = make(map[int64]*Goods, 0)
+	for _, v := range goods {
+		goodsMap[v.ID] = v
+	}
+
+	if _, ok := goodsMap[goodId]; !ok {
+		fmt.Println("认购错误，商品不匹配", goodId, userId, addressId, eth, amount)
+		return nil
+	}
+
+	amountGood := goodsMap[goodId].Amount
+	num := amount / amountGood
+	num2 := amount % amountGood
+	if 0 >= num {
+		fmt.Println("认购错误3，金额", goodId, userId, addressId, eth, amount, amountGood, num, num2)
+		return nil
+	}
+
+	if 0 < num2 {
+		fmt.Println("认购错误4，金额有点问题", goodId, userId, addressId, eth, amount, amountGood, num, num2)
+	}
+
+	var (
+		userAddress []*UserAddress
+	)
+	userAddress, err = ruc.userInfoRepo.GetUserAddress(ctx, uint64(userId))
+	if nil != err || 0 >= len(userAddress) {
+		fmt.Println("认购查询商品错误")
+		return nil
+	}
+
+	userAddressMap := make(map[int64]*UserAddress)
+	for _, v := range userAddress {
+		userAddressMap[v.ID] = v
+	}
+
+	if _, ok := userAddressMap[addressId]; !ok {
+		fmt.Println("认购错误，地址不匹配", goodId, userId, addressId, eth, amount)
+		return nil
+	}
+
+	var (
+		userRecommends    []*UserRecommend
+		userRecommendsMap map[int64]*UserRecommend
+	)
+	userRecommends, err = ruc.userInfoRepo.GetUserRecommends(ctx)
+	if nil != err {
+		fmt.Println("今认购用户获取失败2", goodId, userId, addressId, eth, amount)
+		return nil
+	}
+
+	myLowUser := make(map[int64][]*UserRecommend, 0)
+	userRecommendsMap = make(map[int64]*UserRecommend, 0)
+	for _, vUr := range userRecommends {
+		userRecommendsMap[vUr.UserId] = vUr
+
+		// 我的直推
+		var (
+			myUserRecommendUserId int64
+			tmpRecommendUserIds   []string
+		)
+
+		tmpRecommendUserIds = strings.Split(vUr.RecommendCode, "D")
+		if 2 <= len(tmpRecommendUserIds) {
+			myUserRecommendUserId, _ = strconv.ParseInt(tmpRecommendUserIds[len(tmpRecommendUserIds)-1], 10, 64) // 最后一位是直推人
+		}
+
+		if 0 >= myUserRecommendUserId {
+			continue
+		}
+
+		if _, ok := myLowUser[myUserRecommendUserId]; !ok {
+			myLowUser[myUserRecommendUserId] = make([]*UserRecommend, 0)
+		}
+
+		myLowUser[myUserRecommendUserId] = append(myLowUser[myUserRecommendUserId], vUr)
+	}
+
+	var (
+		users    []*User
+		usersMap map[int64]*User
+	)
+	users, err = ruc.userInfoRepo.GetAllUsers(ctx)
+	if nil == users {
+		fmt.Println("认购用户获取失败", goodId, userId, addressId, eth, amount)
+		return nil
+	}
+
+	usersMap = make(map[int64]*User, 0)
+
+	for _, vUsers := range users {
+		usersMap[vUsers.ID] = vUsers
+	}
+
+	if _, ok := usersMap[userId]; !ok {
+		fmt.Println("认购用户不存在", goodId, userId, addressId, eth, amount)
+		return nil
+	}
+
+	amountUsdt := amount * 70 / 100
+	if err = ruc.tx.ExecTx(ctx, func(ctx context.Context) error { // 事务
+		err = ruc.userInfoRepo.UpdateUserNewTwoNew(ctx, userId, float64(amountUsdt), num, amount, 1, uint64(addressId), uint64(goodId), "USDT")
+		if nil != err {
+			return err
+		}
+
+		// 充值记录
+		_, err = ruc.ethUserRecordRepo.CreateEthUserRecordListByHash(ctx, &EthUserRecord{
+			Hash:      eth.Hash,
+			UserId:    eth.UserId,
+			Status:    eth.Status,
+			Type:      eth.Type,
+			Amount:    eth.Amount,
+			AmountTwo: amount,
+			CoinType:  eth.CoinType,
+			Last:      eth.Last,
+		})
+		if nil != err {
+			return err
+		}
+
+		return nil
+	}); nil != err {
+		fmt.Println("认购失败", goodId, userId, addressId, eth, amount)
+		return err
+	}
+
+	// 推荐人
+	var (
+		userRecommend       *UserRecommend
+		tmpRecommendUserIds []string
+	)
+	userRecommend, err = ruc.userInfoRepo.GetUserRecommendByUserId(ctx, userId)
+	if nil != err {
+		fmt.Println("认购失败，查询推荐人失败", goodId, userId, addressId, eth, amount)
+		return err
+	}
+	if "" != userRecommend.RecommendCode {
+		tmpRecommendUserIds = strings.Split(userRecommend.RecommendCode, "D")
+	}
+
+	two := 0
+	for i := len(tmpRecommendUserIds) - 1; i >= 0; i-- {
+		tmpUserId, _ := strconv.ParseInt(tmpRecommendUserIds[i], 10, 64) // 最后一位是直推人
+		if 0 >= tmpUserId {
+			continue
+		}
+
+		if _, ok := usersMap[tmpUserId]; !ok {
+			fmt.Println("错误分红社区，信息缺失,user：", goodId, userId, addressId, eth, amount)
+			continue
+		}
+
+		if err = ruc.tx.ExecTx(ctx, func(ctx context.Context) error { // 事务
+			// 增加业绩
+			err = ruc.userInfoRepo.UpdateUserMyTotalAmountAdd(ctx, tmpUserId, float64(amountUsdt))
+			if err != nil {
+				fmt.Println("错误修改业绩认购：", err, goodId, userId, addressId, eth, amount)
+			}
+
+			if 0 < usersMap[tmpUserId].RecommendLevel {
+				var (
+					code int64
+				)
+
+				code, err = ruc.userInfoRepo.UpdateUserRewardRecommend2(ctx, tmpUserId, userId, usersMap[userId].Address, float64(amountUsdt)*recommendLevel)
+				if code > 0 && err != nil {
+					fmt.Println("错误分红特殊：", err, goodId, userId, addressId, eth, amount)
+				}
+			}
+
+			return nil
+		}); nil != err {
+			fmt.Println(err, "错误投资2", err, goodId, userId, addressId, eth, amount)
+			return err
+		}
+
+		// 已经出局的
+		if 0 >= usersMap[tmpUserId].AmountUsdt {
+			continue
+		}
+
+		two++
+		tmp := float64(amountUsdt)
+		tmpTwo := false
+		if 1 == two {
+			tmp = tmp * recommend
+		} else if 2 == two {
+			tmp = tmp * recommendTwo
+			tmpTwo = true
+		} else {
+			continue
+		}
+
+		var (
+			stopArea2 bool
+		)
+		tmpRecommendUser := usersMap[tmpUserId]
+		if nil == tmpRecommendUser {
+			continue
+		}
+
+		if tmp+usersMap[tmpUserId].AmountUsdtGet >= tmpRecommendUser.AmountUsdt*3 {
+			tmp = math.Abs(tmpRecommendUser.AmountUsdt*3 - tmpRecommendUser.AmountUsdtGet)
+			stopArea2 = true
+		}
+
+		tmpUsdt := tmp * rewardUsdtRate
+		tmpNana := tmp * exchangeNanaRate / bPrice
+
+		tmp = math.Round(tmp*10000000) / 10000000
+		tmpUsdt = math.Round(tmpUsdt*10000000) / 10000000
+		tmpNana = math.Round(tmpNana*10000000) / 10000000
+
+		if err = ruc.tx.ExecTx(ctx, func(ctx context.Context) error { // 事务
+			var (
+				code int64
+			)
+
+			code, err = ruc.userInfoRepo.UpdateUserRewardRecommend3(ctx, tmpRecommendUser.ID, userId, usersMap[userId].Address, tmp, tmpUsdt, tmpNana, tmpRecommendUser.AmountUsdtOrigin, tmpTwo, stopArea2)
+			if code > 0 && err != nil {
+				fmt.Println("错误分红社区：", err, goodId, userId, addressId, eth, amount, tmpRecommendUser)
+			}
+
+			if stopArea2 {
+				// 推荐人
+				var (
+					userRecommendArea *UserRecommend
+				)
+				if _, ok := userRecommendsMap[tmpRecommendUser.ID]; ok {
+					userRecommendArea = userRecommendsMap[tmpRecommendUser.ID]
+				} else {
+					fmt.Println("错误分红社区，信息缺失7：", err, goodId, userId, addressId, eth, amount, tmpRecommendUser)
+				}
+
+				if nil != userRecommendArea && "" != userRecommendArea.RecommendCode {
+					var tmpRecommendAreaUserIds []string
+					tmpRecommendAreaUserIds = strings.Split(userRecommendArea.RecommendCode, "D")
+
+					for _, vTmpRecommendAreaUserIds := range tmpRecommendAreaUserIds {
+						if 0 >= len(vTmpRecommendAreaUserIds) {
+							continue
+						}
+
+						myUserRecommendAreaUserId, _ := strconv.ParseInt(vTmpRecommendAreaUserIds, 10, 64) // 最后一位是直推人
+						if 0 >= myUserRecommendAreaUserId {
+							continue
+						}
+
+						// 减掉业绩
+						err = ruc.userInfoRepo.UpdateUserMyTotalAmount(ctx, myUserRecommendAreaUserId, tmpRecommendUser.AmountUsdt)
+						if err != nil {
+							fmt.Println("错误分红社区：", err, goodId, userId, addressId, eth, amount, tmpRecommendUser)
+						}
+					}
+				}
+			}
+
+			return nil
+		}); nil != err {
+			fmt.Println("err reward area 2", err, goodId, userId, addressId, eth, amount, tmpRecommendUser)
+		}
+	}
+
+	return nil
+}
+
+func (ruc *RecordUseCase) DepositNewBak(ctx context.Context, userId int64, amount uint64, last uint64, eth *EthUserRecord) error {
 	// 推荐人
 	var (
 		err error

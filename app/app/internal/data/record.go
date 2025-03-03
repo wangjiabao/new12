@@ -100,6 +100,19 @@ func (e *EthUserRecordRepo) GetEthUserRecordLast(ctx context.Context) (int64, er
 	return ethUserRecord.Last, nil
 }
 
+func (e *EthUserRecordRepo) GetUserLastDeposit(ctx context.Context) (uint64, error) {
+	var user *User
+	if err := e.data.DB(ctx).Table("user").Order("last_deposit desc").First(&user).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return 0, nil
+		}
+
+		return -1, errors.New(500, "USER RECOMMEND ERROR", err.Error())
+	}
+
+	return user.LastDeposit, nil
+}
+
 func (e *EthUserRecordRepo) GetEthUserRecordLast2(ctx context.Context) (int64, error) {
 	var ethUserRecord *EthUserRecord
 	if err := e.data.DB(ctx).Table("eth_user_record_2").Order("last desc").First(&ethUserRecord).Error; err != nil {
