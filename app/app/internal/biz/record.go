@@ -89,7 +89,7 @@ type EthUserRecordRepo interface {
 	GetEthUserRecordListByHash(ctx context.Context, hash ...string) (map[string]*EthUserRecord, error)
 	GetEthUserRecordListByHash2(ctx context.Context, hash ...string) (map[string]*EthUserRecord, error)
 	GetEthUserRecordLast(ctx context.Context) (int64, error)
-	GetUserLastDeposit(ctx context.Context) (uint64, error)
+	GetUserLastDeposit(ctx context.Context) (int64, error)
 	GetEthUserRecordLast2(ctx context.Context) (int64, error)
 	CreateEthUserRecordListByHash(ctx context.Context, r *EthUserRecord) (*EthUserRecord, error)
 	CreateEthUserRecordListByHash2(ctx context.Context, r *EthUserRecord) (*EthUserRecord, error)
@@ -187,7 +187,7 @@ func (ruc *RecordUseCase) GetEthUserRecordLast(ctx context.Context) (int64, erro
 	return ruc.ethUserRecordRepo.GetEthUserRecordLast(ctx)
 }
 
-func (ruc *RecordUseCase) GetUserLastDeposit(ctx context.Context) (uint64, error) {
+func (ruc *RecordUseCase) GetUserLastDeposit(ctx context.Context) (int64, error) {
 	return ruc.ethUserRecordRepo.GetUserLastDeposit(ctx)
 }
 

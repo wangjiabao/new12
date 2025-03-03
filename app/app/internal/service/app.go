@@ -234,7 +234,7 @@ func (a *AppService) DepositSuper(ctx context.Context, req *v1.DepositRequest) (
 			depositUsers      map[string]*biz.User
 			fromAccount       []string
 			userLength        int64
-			last              uint64
+			last              int64
 			err               error
 		)
 
@@ -264,7 +264,7 @@ func (a *AppService) DepositSuper(ctx context.Context, req *v1.DepositRequest) (
 			break
 		}
 
-		if last >= uint64(userLength) {
+		if last >= userLength {
 			break
 		}
 
