@@ -89,6 +89,7 @@ const (
 	App_LockUser_FullMethodName                             = "/api.App/LockUser"
 	App_AdminRecommendLevelUpdate_FullMethodName            = "/api.App/AdminRecommendLevelUpdate"
 	App_AdminBuyUpdate_FullMethodName                       = "/api.App/AdminBuyUpdate"
+	App_AdminBuy_FullMethodName                             = "/api.App/AdminBuy"
 	App_AdminCreateGoods_FullMethodName                     = "/api.App/AdminCreateGoods"
 )
 
@@ -166,6 +167,7 @@ type AppClient interface {
 	LockUser(ctx context.Context, in *LockUserRequest, opts ...grpc.CallOption) (*LockUserReply, error)
 	AdminRecommendLevelUpdate(ctx context.Context, in *AdminRecommendLevelRequest, opts ...grpc.CallOption) (*AdminRecommendLevelReply, error)
 	AdminBuyUpdate(ctx context.Context, in *AdminBuyUpdateRequest, opts ...grpc.CallOption) (*AdminBuyUpdateReply, error)
+	AdminBuy(ctx context.Context, in *AdminBuyRequest, opts ...grpc.CallOption) (*AdminBuyReply, error)
 	AdminCreateGoods(ctx context.Context, in *AdminCreateGoodsRequest, opts ...grpc.CallOption) (*AdminCreateGoodsReply, error)
 }
 
@@ -807,6 +809,15 @@ func (c *appClient) AdminBuyUpdate(ctx context.Context, in *AdminBuyUpdateReques
 	return out, nil
 }
 
+func (c *appClient) AdminBuy(ctx context.Context, in *AdminBuyRequest, opts ...grpc.CallOption) (*AdminBuyReply, error) {
+	out := new(AdminBuyReply)
+	err := c.cc.Invoke(ctx, App_AdminBuy_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *appClient) AdminCreateGoods(ctx context.Context, in *AdminCreateGoodsRequest, opts ...grpc.CallOption) (*AdminCreateGoodsReply, error) {
 	out := new(AdminCreateGoodsReply)
 	err := c.cc.Invoke(ctx, App_AdminCreateGoods_FullMethodName, in, out, opts...)
@@ -890,6 +901,7 @@ type AppServer interface {
 	LockUser(context.Context, *LockUserRequest) (*LockUserReply, error)
 	AdminRecommendLevelUpdate(context.Context, *AdminRecommendLevelRequest) (*AdminRecommendLevelReply, error)
 	AdminBuyUpdate(context.Context, *AdminBuyUpdateRequest) (*AdminBuyUpdateReply, error)
+	AdminBuy(context.Context, *AdminBuyRequest) (*AdminBuyReply, error)
 	AdminCreateGoods(context.Context, *AdminCreateGoodsRequest) (*AdminCreateGoodsReply, error)
 	mustEmbedUnimplementedAppServer()
 }
@@ -1107,6 +1119,9 @@ func (UnimplementedAppServer) AdminRecommendLevelUpdate(context.Context, *AdminR
 }
 func (UnimplementedAppServer) AdminBuyUpdate(context.Context, *AdminBuyUpdateRequest) (*AdminBuyUpdateReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AdminBuyUpdate not implemented")
+}
+func (UnimplementedAppServer) AdminBuy(context.Context, *AdminBuyRequest) (*AdminBuyReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AdminBuy not implemented")
 }
 func (UnimplementedAppServer) AdminCreateGoods(context.Context, *AdminCreateGoodsRequest) (*AdminCreateGoodsReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AdminCreateGoods not implemented")
@@ -2384,6 +2399,24 @@ func _App_AdminBuyUpdate_Handler(srv interface{}, ctx context.Context, dec func(
 	return interceptor(ctx, in, info, handler)
 }
 
+func _App_AdminBuy_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AdminBuyRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AppServer).AdminBuy(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: App_AdminBuy_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AppServer).AdminBuy(ctx, req.(*AdminBuyRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _App_AdminCreateGoods_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(AdminCreateGoodsRequest)
 	if err := dec(in); err != nil {
@@ -2688,6 +2721,10 @@ var App_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "AdminBuyUpdate",
 			Handler:    _App_AdminBuyUpdate_Handler,
+		},
+		{
+			MethodName: "AdminBuy",
+			Handler:    _App_AdminBuy_Handler,
 		},
 		{
 			MethodName: "AdminCreateGoods",

@@ -456,6 +456,13 @@ service App {
 		};
 	};
 
+	rpc AdminBuy (AdminBuyRequest) returns (AdminBuyReply) {
+		option (google.api.http) = {
+			post: "/api/admin_dhb/buy"
+			body: "send_body"
+		};
+	};
+
 	rpc AdminCreateGoods (AdminCreateGoodsRequest) returns (AdminCreateGoodsReply) {
 		option (google.api.http) = {
 			post: "/api/admin_dhb/update_goods"
@@ -1136,6 +1143,18 @@ message AdminBuyUpdateReply {
 
 }
 
+message AdminBuyRequest {
+	message SendBody{
+		int64 userId = 1;
+		int64 amount = 2; // 金额
+	}
+
+	SendBody send_body = 1;
+}
+
+message AdminBuyReply {
+
+}
 
 message AuthAdminDeleteReply {
 

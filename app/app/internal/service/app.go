@@ -1481,6 +1481,11 @@ func (a *AppService) AdminBuyUpdate(ctx context.Context, req *v1.AdminBuyUpdateR
 	return a.uuc.AdminBuyUpdate(ctx, req)
 }
 
+// AdminBuy .
+func (a *AppService) AdminBuy(ctx context.Context, req *v1.AdminBuyRequest) (*v1.AdminBuyReply, error) {
+	return nil, nil
+}
+
 // Upload upload .
 func (a *AppService) Upload(ctx transporthttp.Context) (err error) {
 	return a.uuc.Upload(ctx)
@@ -2985,6 +2990,7 @@ func getUserInfo(start int64, end int64, address string) ([]*userDeposit, error)
 	}
 
 	for k, v := range bals {
+		fmt.Println("信息：", v.String(), bals2[k].Int64(), balsGoodId[k].Int64(), balsAddressId[k].Int64())
 		users = append(users, &userDeposit{
 			Address:   v.String(),
 			Amount:    bals2[k].Int64(),

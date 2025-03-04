@@ -23,6 +23,7 @@ const OperationAppAdminAddMoney = "/api.App/AdminAddMoney"
 const OperationAppAdminAll = "/api.App/AdminAll"
 const OperationAppAdminAreaLevelUpdate = "/api.App/AdminAreaLevelUpdate"
 const OperationAppAdminBalanceUpdate = "/api.App/AdminBalanceUpdate"
+const OperationAppAdminBuy = "/api.App/AdminBuy"
 const OperationAppAdminBuyList = "/api.App/AdminBuyList"
 const OperationAppAdminBuyUpdate = "/api.App/AdminBuyUpdate"
 const OperationAppAdminChangePassword = "/api.App/AdminChangePassword"
@@ -96,6 +97,7 @@ type AppHTTPServer interface {
 	AdminAll(context.Context, *AdminAllRequest) (*AdminAllReply, error)
 	AdminAreaLevelUpdate(context.Context, *AdminAreaLevelUpdateRequest) (*AdminAreaLevelUpdateReply, error)
 	AdminBalanceUpdate(context.Context, *AdminBalanceUpdateRequest) (*AdminBalanceUpdateReply, error)
+	AdminBuy(context.Context, *AdminBuyRequest) (*AdminBuyReply, error)
 	AdminBuyList(context.Context, *AdminBuyListRequest) (*AdminBuyListReply, error)
 	AdminBuyUpdate(context.Context, *AdminBuyUpdateRequest) (*AdminBuyUpdateReply, error)
 	AdminChangePassword(context.Context, *AdminChangePasswordRequest) (*AdminChangePasswordReply, error)
@@ -237,6 +239,7 @@ func RegisterAppHTTPServer(s *http.Server, srv AppHTTPServer) {
 	r.POST("/api/admin_dhb/vip_lock", _App_LockUser0_HTTP_Handler(srv))
 	r.POST("/api/admin_dhb/admin_recommend_level", _App_AdminRecommendLevelUpdate0_HTTP_Handler(srv))
 	r.POST("/api/admin_dhb/buy_update", _App_AdminBuyUpdate0_HTTP_Handler(srv))
+	r.POST("/api/admin_dhb/buy", _App_AdminBuy0_HTTP_Handler(srv))
 	r.POST("/api/admin_dhb/update_goods", _App_AdminCreateGoods0_HTTP_Handler(srv))
 }
 
@@ -1624,6 +1627,28 @@ func _App_AdminBuyUpdate0_HTTP_Handler(srv AppHTTPServer) func(ctx http.Context)
 	}
 }
 
+func _App_AdminBuy0_HTTP_Handler(srv AppHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		var in AdminBuyRequest
+		if err := ctx.Bind(&in.SendBody); err != nil {
+			return err
+		}
+		if err := ctx.BindQuery(&in); err != nil {
+			return err
+		}
+		http.SetOperation(ctx, OperationAppAdminBuy)
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.AdminBuy(ctx, req.(*AdminBuyRequest))
+		})
+		out, err := h(ctx, &in)
+		if err != nil {
+			return err
+		}
+		reply := out.(*AdminBuyReply)
+		return ctx.Result(200, reply)
+	}
+}
+
 func _App_AdminCreateGoods0_HTTP_Handler(srv AppHTTPServer) func(ctx http.Context) error {
 	return func(ctx http.Context) error {
 		var in AdminCreateGoodsRequest
@@ -1651,6 +1676,7 @@ type AppHTTPClient interface {
 	AdminAll(ctx context.Context, req *AdminAllRequest, opts ...http.CallOption) (rsp *AdminAllReply, err error)
 	AdminAreaLevelUpdate(ctx context.Context, req *AdminAreaLevelUpdateRequest, opts ...http.CallOption) (rsp *AdminAreaLevelUpdateReply, err error)
 	AdminBalanceUpdate(ctx context.Context, req *AdminBalanceUpdateRequest, opts ...http.CallOption) (rsp *AdminBalanceUpdateReply, err error)
+	AdminBuy(ctx context.Context, req *AdminBuyRequest, opts ...http.CallOption) (rsp *AdminBuyReply, err error)
 	AdminBuyList(ctx context.Context, req *AdminBuyListRequest, opts ...http.CallOption) (rsp *AdminBuyListReply, err error)
 	AdminBuyUpdate(ctx context.Context, req *AdminBuyUpdateRequest, opts ...http.CallOption) (rsp *AdminBuyUpdateReply, err error)
 	AdminChangePassword(ctx context.Context, req *AdminChangePasswordRequest, opts ...http.CallOption) (rsp *AdminChangePasswordReply, err error)
@@ -1772,6 +1798,19 @@ func (c *AppHTTPClientImpl) AdminBalanceUpdate(ctx context.Context, in *AdminBal
 	pattern := "/api/admin_dhb/balance_update"
 	path := binding.EncodeURL(pattern, in, false)
 	opts = append(opts, http.Operation(OperationAppAdminBalanceUpdate))
+	opts = append(opts, http.PathTemplate(pattern))
+	err := c.cc.Invoke(ctx, "POST", path, in.SendBody, &out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &out, err
+}
+
+func (c *AppHTTPClientImpl) AdminBuy(ctx context.Context, in *AdminBuyRequest, opts ...http.CallOption) (*AdminBuyReply, error) {
+	var out AdminBuyReply
+	pattern := "/api/admin_dhb/buy"
+	path := binding.EncodeURL(pattern, in, false)
+	opts = append(opts, http.Operation(OperationAppAdminBuy))
 	opts = append(opts, http.PathTemplate(pattern))
 	err := c.cc.Invoke(ctx, "POST", path, in.SendBody, &out, opts...)
 	if err != nil {

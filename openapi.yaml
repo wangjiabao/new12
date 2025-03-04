@@ -211,6 +211,30 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Status'
+    /api/admin_dhb/buy:
+        post:
+            tags:
+                - App
+            operationId: App_AdminBuy
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/AdminBuyRequest_SendBody'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/AdminBuyReply'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
     /api/admin_dhb/buy_list:
         get:
             tags:
@@ -1674,6 +1698,16 @@ components:
                 name:
                     type: string
                 status:
+                    type: string
+        AdminBuyReply:
+            type: object
+            properties: {}
+        AdminBuyRequest_SendBody:
+            type: object
+            properties:
+                userId:
+                    type: string
+                amount:
                     type: string
         AdminBuyUpdateReply:
             type: object
