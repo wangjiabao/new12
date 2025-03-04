@@ -5572,7 +5572,7 @@ func (ub UserBalanceRepo) GetUserRewardLocationTotalToday(ctx context.Context, r
 
 // GetUserBalanceRecordCountTotalToday .
 func (ub UserBalanceRepo) GetUserBalanceRecordCountTotalToday(ctx context.Context) (int64, error) {
-	var total UserBalanceTotal
+	var totals []UserBalanceTotal
 
 	now := time.Now().UTC()
 	var startDate time.Time
@@ -5592,15 +5592,15 @@ func (ub UserBalanceRepo) GetUserBalanceRecordCountTotalToday(ctx context.Contex
 		Where("coin_type=?", "USDT").
 		Group("user_id").
 		Where("created_at>=?", todayStart).Where("created_at<?", todayEnd).
-		Select("count(id) as total,user_id").Take(&total).Error; err != nil {
+		Select("count(id) as total").Find(totals).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return total.Total, errors.NotFound("USER_BALANCE_RECORD_NOT_FOUND", "user balance not found")
+			return 0, errors.NotFound("USER_BALANCE_RECORD_NOT_FOUND", "user balance not found")
 		}
 
-		return total.Total, errors.New(500, "USER BALANCE RECORD ERROR", err.Error())
+		return 0, errors.New(500, "USER BALANCE RECORD ERROR", err.Error())
 	}
 
-	return total.Total, nil
+	return int64(len(totals)), nil
 }
 
 // GetUserBalanceRecordUsdtTotalToday .
