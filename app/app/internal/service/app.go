@@ -3,11 +3,11 @@ package service
 import (
 	"context"
 	"crypto/ecdsa"
+	v1 "dhb/app/app/api"
+	"dhb/app/app/internal/biz"
+	"dhb/app/app/internal/conf"
 	"encoding/json"
 	"fmt"
-	sdk "github.com/BioforestChain/go-bfmeta-wallet-sdk"
-	"github.com/BioforestChain/go-bfmeta-wallet-sdk/entity/req/broadcastTra"
-	"github.com/BioforestChain/go-bfmeta-wallet-sdk/entity/req/createTransferAsset"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -19,16 +19,11 @@ import (
 	transporthttp "github.com/go-kratos/kratos/v2/transport/http"
 	jwt2 "github.com/golang-jwt/jwt/v4"
 	"io"
+	"io/ioutil"
 	"math/big"
+	"net/http"
 	"net/url"
 	"strconv"
-	"strings"
-
-	v1 "dhb/app/app/api"
-	"dhb/app/app/internal/biz"
-	"dhb/app/app/internal/conf"
-	"io/ioutil"
-	"net/http"
 	"time"
 )
 
@@ -2459,137 +2454,138 @@ func (a *AppService) LockSystem(ctx context.Context, req *v1.LockSystemRequest) 
 }
 
 func (a *AppService) AdminWithdrawBiw(ctx context.Context, req *v1.AdminWithdrawEthRequest) (*v1.AdminWithdrawEthReply, error) {
-	var (
-		withdraw *biz.Withdraw
-		//trade        *biz.Trade
-		userIds    []int64
-		userIdsMap map[int64]int64
-		users      map[int64]*biz.User
-		err        error
-	)
-	end := time.Now().UTC().Add(45 * time.Second)
-	for {
-		now := time.Now().UTC()
-		//fmt.Println(now, end)
-		if end.Before(now) {
-			break
-		}
-
-		withdraw, err = a.uuc.GetWithdrawPassOrRewardedFirst(ctx)
-		if nil == withdraw {
-			break
-		}
-
-		if "NANA" != withdraw.Type {
-			continue
-		}
-
-		userIdsMap = make(map[int64]int64, 0)
-		//for _, vWithdraws := range withdraws {
-		//	userIdsMap[vWithdraws.UserId] = vWithdraws.UserId
-		//}
-		userIdsMap[withdraw.UserId] = withdraw.UserId
-		for _, v := range userIdsMap {
-			userIds = append(userIds, v)
-		}
-
-		users, err = a.uuc.GetUserByUserIds(ctx, userIds...)
-		if nil != err {
-			return nil, err
-		}
-
-		if _, ok := users[withdraw.UserId]; !ok {
-			continue
-		}
-		_, err = a.uuc.UpdateWithdrawSuccess(ctx, withdraw.ID)
-		if nil != err {
-			fmt.Println("提现处理：", err)
-			continue
-		}
-		var amount string
-		// 定义精度为小数点后8位
-		const precision = 8
-
-		// 将浮点数转换为大浮点数
-		bigFloat := new(big.Float).SetPrec(256).SetFloat64(withdraw.RelAmountNew)
-
-		// 将大浮点数转换为字符串表示形式，保留精度
-		floatStr := bigFloat.Text('f', precision)
-
-		// 分割整数和小数部分
-		parts := strings.Split(floatStr, ".")
-
-		// 确保小数部分非空
-		if len(parts) == 1 {
-			parts = append(parts, "")
-		}
-
-		// 组合整数和小数部分，并添加适当的零
-		intStr := parts[0] + parts[1] + strings.Repeat("0", precision-len(parts[1]))
-
-		// 移除前导零，保留至少一个零
-		intStr = strings.TrimLeft(intStr, "0")
-		if len(intStr) == 0 {
-			continue
-		}
-		amount = intStr
-		var (
-			msg  string
-			code string
-			res  bool
-		)
-
-		time.Sleep(8 * time.Second)
-		res, msg, code, err = sendTransactionBiw(ctx, "", users[withdraw.UserId].Address, amount)
-		if !res || nil != err {
-			fmt.Println(res, msg, code, withdraw)
-			continue
-		}
-	}
+	//var (
+	//	withdraw *biz.Withdraw
+	//	//trade        *biz.Trade
+	//	userIds    []int64
+	//	userIdsMap map[int64]int64
+	//	users      map[int64]*biz.User
+	//	err        error
+	//)
+	//end := time.Now().UTC().Add(45 * time.Second)
+	//for {
+	//	now := time.Now().UTC()
+	//	//fmt.Println(now, end)
+	//	if end.Before(now) {
+	//		break
+	//	}
+	//
+	//	withdraw, err = a.uuc.GetWithdrawPassOrRewardedFirst(ctx)
+	//	if nil == withdraw {
+	//		break
+	//	}
+	//
+	//	if "NANA" != withdraw.Type {
+	//		continue
+	//	}
+	//
+	//	userIdsMap = make(map[int64]int64, 0)
+	//	//for _, vWithdraws := range withdraws {
+	//	//	userIdsMap[vWithdraws.UserId] = vWithdraws.UserId
+	//	//}
+	//	userIdsMap[withdraw.UserId] = withdraw.UserId
+	//	for _, v := range userIdsMap {
+	//		userIds = append(userIds, v)
+	//	}
+	//
+	//	users, err = a.uuc.GetUserByUserIds(ctx, userIds...)
+	//	if nil != err {
+	//		return nil, err
+	//	}
+	//
+	//	if _, ok := users[withdraw.UserId]; !ok {
+	//		continue
+	//	}
+	//	_, err = a.uuc.UpdateWithdrawSuccess(ctx, withdraw.ID)
+	//	if nil != err {
+	//		fmt.Println("提现处理：", err)
+	//		continue
+	//	}
+	//	var amount string
+	//	// 定义精度为小数点后8位
+	//	const precision = 8
+	//
+	//	// 将浮点数转换为大浮点数
+	//	bigFloat := new(big.Float).SetPrec(256).SetFloat64(withdraw.RelAmountNew)
+	//
+	//	// 将大浮点数转换为字符串表示形式，保留精度
+	//	floatStr := bigFloat.Text('f', precision)
+	//
+	//	// 分割整数和小数部分
+	//	parts := strings.Split(floatStr, ".")
+	//
+	//	// 确保小数部分非空
+	//	if len(parts) == 1 {
+	//		parts = append(parts, "")
+	//	}
+	//
+	//	// 组合整数和小数部分，并添加适当的零
+	//	intStr := parts[0] + parts[1] + strings.Repeat("0", precision-len(parts[1]))
+	//
+	//	// 移除前导零，保留至少一个零
+	//	intStr = strings.TrimLeft(intStr, "0")
+	//	if len(intStr) == 0 {
+	//		continue
+	//	}
+	//	amount = intStr
+	//	var (
+	//		msg  string
+	//		code string
+	//		res  bool
+	//	)
+	//
+	//	time.Sleep(8 * time.Second)
+	//	res, msg, code, err = sendTransactionBiw(ctx, "", users[withdraw.UserId].Address, amount)
+	//	if !res || nil != err {
+	//		fmt.Println(res, msg, code, withdraw)
+	//		continue
+	//	}
+	//}
 
 	return &v1.AdminWithdrawEthReply{}, nil
 }
 
-var sdkClient = sdk.NewBCFWalletSDK()
-var bCFSignUtil = sdkClient.NewBCFSignUtil("b")
-var wallet = sdkClient.NewBCFWallet("35.213.66.234", 30003, "https://tracker.biw-meta.info/browser")
-
-func sendTransactionBiw(ctx context.Context, secret string, toAddr string, toAmount string) (bool, string, string, error) {
-	bCFSignUtilCreateKeypair, _ := bCFSignUtil.CreateKeypair(secret)
-
-	reqCreateTransferAsset := createTransferAsset.TransferAssetTransactionParams{
-		TransactionCommonParamsWithRecipientId: createTransferAsset.TransactionCommonParamsWithRecipientId{
-			TransactionCommonParams: createTransferAsset.TransactionCommonParams{
-				PublicKey:        bCFSignUtilCreateKeypair.PublicKey,
-				Fee:              "5000",
-				ApplyBlockHeight: wallet.GetLastBlock().Result.Height,
-			},
-			RecipientId: toAddr, //钱包地址
-		},
-		Amount:    toAmount,
-		AssetType: "NANA",
-	}
-
-	createTransferAssetResp, _ := wallet.CreateTransferAsset(reqCreateTransferAsset)
-	if !createTransferAssetResp.Success {
-		return false, "错误", "错误", nil
-	}
-
-	//// 3.3 生成签名
-	detachedSign, _ := bCFSignUtil.DetachedSign(createTransferAssetResp.Result.Buffer.StringBuffer, bCFSignUtilCreateKeypair.SecretKey.StringBuffer)
-
-	//// 3.4 bugWallet.BroadcastTransferAsset()
-	req1 := broadcastTra.BroadcastTransactionParams{
-		Signature: detachedSign,
-		Buffer:    createTransferAssetResp.Result.Buffer, //3.2 上面取得的buffer
-		IsOnChain: true,
-	}
-
-	broadcastResult, err := wallet.BroadcastTransferAsset(req1)
-	success := broadcastResult.Success
-
-	return success, broadcastResult.Error.Message, broadcastResult.Error.Code, err
-}
+//
+//var sdkClient = sdk.NewBCFWalletSDK()
+//var bCFSignUtil = sdkClient.NewBCFSignUtil("b")
+//var wallet = sdkClient.NewBCFWallet("35.213.66.234", 30003, "https://tracker.biw-meta.info/browser")
+//
+//func sendTransactionBiw(ctx context.Context, secret string, toAddr string, toAmount string) (bool, string, string, error) {
+//	bCFSignUtilCreateKeypair, _ := bCFSignUtil.CreateKeypair(secret)
+//
+//	reqCreateTransferAsset := createTransferAsset.TransferAssetTransactionParams{
+//		TransactionCommonParamsWithRecipientId: createTransferAsset.TransactionCommonParamsWithRecipientId{
+//			TransactionCommonParams: createTransferAsset.TransactionCommonParams{
+//				PublicKey:        bCFSignUtilCreateKeypair.PublicKey,
+//				Fee:              "5000",
+//				ApplyBlockHeight: wallet.GetLastBlock().Result.Height,
+//			},
+//			RecipientId: toAddr, //钱包地址
+//		},
+//		Amount:    toAmount,
+//		AssetType: "NANA",
+//	}
+//
+//	createTransferAssetResp, _ := wallet.CreateTransferAsset(reqCreateTransferAsset)
+//	if !createTransferAssetResp.Success {
+//		return false, "错误", "错误", nil
+//	}
+//
+//	//// 3.3 生成签名
+//	detachedSign, _ := bCFSignUtil.DetachedSign(createTransferAssetResp.Result.Buffer.StringBuffer, bCFSignUtilCreateKeypair.SecretKey.StringBuffer)
+//
+//	//// 3.4 bugWallet.BroadcastTransferAsset()
+//	req1 := broadcastTra.BroadcastTransactionParams{
+//		Signature: detachedSign,
+//		Buffer:    createTransferAssetResp.Result.Buffer, //3.2 上面取得的buffer
+//		IsOnChain: true,
+//	}
+//
+//	broadcastResult, err := wallet.BroadcastTransferAsset(req1)
+//	success := broadcastResult.Success
+//
+//	return success, broadcastResult.Error.Message, broadcastResult.Error.Code, err
+//}
 
 func (a *AppService) AdminWithdrawEth(ctx context.Context, req *v1.AdminWithdrawEthRequest) (*v1.AdminWithdrawEthReply, error) {
 	var (
@@ -2625,6 +2621,8 @@ func (a *AppService) AdminWithdrawEth(ctx context.Context, req *v1.AdminWithdraw
 
 		if "USDT" == withdraw.Type {
 			tokenAddress = "0x55d398326f99059fF775485246999027B3197955"
+		} else if "NANA" == withdraw.Type {
+			tokenAddress = "0xfe1D819E4c2BA30dc84B42C0277563d0eE341b9D"
 		} else {
 			continue
 		}
