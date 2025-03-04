@@ -2888,7 +2888,7 @@ func (ui *UserInfoRepo) GetUserRecommends(ctx context.Context) ([]*biz.UserRecom
 func (ui *UserInfoRepo) GetGoods(ctx context.Context) ([]*biz.Goods, error) {
 	var goods []*Goods
 	res := make([]*biz.Goods, 0)
-	if err := ui.data.db.Where("status=?", 1).Table("goods").Find(&goods).Error; err != nil {
+	if err := ui.data.db.Table("goods").Find(&goods).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}

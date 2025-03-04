@@ -166,9 +166,9 @@ func (a *AppService) Deposit(ctx context.Context, req *v1.DepositRequest) (*v1.D
 				// 充值
 				err = a.ruc.DepositNew(
 					ctx,
+					depositUsers[vUser.Address].ID,
 					vUser.GoodId,
 					vUser.AddressId,
-					depositUsers[vUser.Address].ID,
 					uint64(tmpValue),
 					&biz.EthUserRecord{ // 两种币的记录
 						UserId:    depositUsers[vUser.Address].ID,
