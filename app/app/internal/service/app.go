@@ -111,7 +111,7 @@ func (a *AppService) Deposit(ctx context.Context, req *v1.DepositRequest) (*v1.D
 
 		// 0x0299e92df88c034F6425e78b6f6A367e84160B45 test
 		// 0x5d4bAA2A7a73dEF7685d036AAE993662B0Ef2f8F rel
-		userLength, err = getUserLength("0x800fD9BC0919838f16a92B842388Bc08dBeA2a11")
+		userLength, err = getUserLength("0x27611D57CdF8909bE8B0d98c16747b45696E56B2")
 		if nil != err {
 			fmt.Println(err)
 		}
@@ -130,7 +130,7 @@ func (a *AppService) Deposit(ctx context.Context, req *v1.DepositRequest) (*v1.D
 
 		// 0x0299e92df88c034F6425e78b6f6A367e84160B454 test
 		// 0x5d4bAA2A7a73dEF7685d036AAE993662B0Ef2f8F rel
-		depositUsdtResult, err = getUserInfo(last, userLength-1, "0x800fD9BC0919838f16a92B842388Bc08dBeA2a11")
+		depositUsdtResult, err = getUserInfo(last, userLength-1, "0x27611D57CdF8909bE8B0d98c16747b45696E56B2")
 		if nil != err {
 			break
 		}
@@ -251,7 +251,7 @@ func (a *AppService) DepositSuper(ctx context.Context, req *v1.DepositRequest) (
 
 		// 0x0299e92df88c034F6425e78b6f6A367e84160B45 test
 		// 0x5d4bAA2A7a73dEF7685d036AAE993662B0Ef2f8F rel
-		userLength, err = getUserLength("0x800fD9BC0919838f16a92B842388Bc08dBeA2a11")
+		userLength, err = getUserLength2("0x27611D57CdF8909bE8B0d98c16747b45696E56B2")
 		if nil != err {
 			fmt.Println(err)
 		}
@@ -270,7 +270,7 @@ func (a *AppService) DepositSuper(ctx context.Context, req *v1.DepositRequest) (
 
 		// 0x0299e92df88c034F6425e78b6f6A367e84160B454 test
 		// 0x5d4bAA2A7a73dEF7685d036AAE993662B0Ef2f8F rel
-		depositUsdtResult, err = getUserInfo2(int64(last), userLength-1, "0x800fD9BC0919838f16a92B842388Bc08dBeA2a11")
+		depositUsdtResult, err = getUserInfo2(int64(last), userLength-1, "0x27611D57CdF8909bE8B0d98c16747b45696E56B2")
 		if nil != err {
 			break
 		}
@@ -2825,6 +2825,48 @@ func getUserLength(address string) (int64, error) {
 	return balInt, nil
 }
 
+func getUserLength2(address string) (int64, error) {
+	url1 := "https://bsc-dataseed4.binance.org/"
+
+	var balInt int64
+	for i := 0; i < 5; i++ {
+		if 1 == i {
+			url1 = "https://binance.llamarpc.com/"
+		} else if 2 == i {
+			url1 = "https://bscrpc.com/"
+		} else if 3 == i {
+			url1 = "https://bsc-pokt.nodies.app/"
+		} else if 4 == i {
+			url1 = "https://data-seed-prebsc-1-s3.binance.org:8545/"
+		}
+
+		client, err := ethclient.Dial(url1)
+		if err != nil {
+			fmt.Println(nil, err)
+			continue
+		}
+
+		tokenAddress := common.HexToAddress(address)
+		instance, err := NewBuySomething(tokenAddress, client)
+		if err != nil {
+			fmt.Println(nil, err)
+			continue
+		}
+
+		bals, err := instance.GetUserSuperLength(&bind.CallOpts{})
+		if err != nil {
+			fmt.Println(err)
+			//url1 = "https://bsc-dataseed4.binance.org"
+			continue
+		}
+
+		balInt = bals.Int64()
+		break
+	}
+
+	return balInt, nil
+}
+
 type userDeposit struct {
 	Address   string
 	Amount    int64
@@ -2990,7 +3032,6 @@ func getUserInfo(start int64, end int64, address string) ([]*userDeposit, error)
 	}
 
 	for k, v := range bals {
-		fmt.Println("信息：", v.String(), bals2[k].Int64(), balsGoodId[k].Int64(), balsAddressId[k].Int64())
 		users = append(users, &userDeposit{
 			Address:   v.String(),
 			Amount:    bals2[k].Int64(),
