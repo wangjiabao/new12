@@ -1483,7 +1483,7 @@ func (a *AppService) AdminBuyUpdate(ctx context.Context, req *v1.AdminBuyUpdateR
 
 // AdminBuy .
 func (a *AppService) AdminBuy(ctx context.Context, req *v1.AdminBuyRequest) (*v1.AdminBuyReply, error) {
-	return nil, nil
+	return a.uuc.AdminBuy(ctx, req)
 }
 
 // Upload upload .

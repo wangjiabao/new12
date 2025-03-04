@@ -2784,6 +2784,52 @@ func (ui *UserInfoRepo) UpdateUserNewSuper(ctx context.Context, userId int64, am
 	return nil
 }
 
+// UpdateUserNewTwoNewAdmin .
+func (ui *UserInfoRepo) UpdateUserNewTwoNewAdmin(ctx context.Context, userId int64, amount float64, num, amountOrigin uint64, buyType, addressId, goodId uint64, coinType string) error {
+	if "USDT" == coinType {
+		buyTwo := "buy"
+		res2 := ui.data.DB(ctx).Table("user").Where("id=?", userId).
+			Updates(map[string]interface{}{"amount_usdt": gorm.Expr("amount_usdt + ?", amount), "amount_usdt_origin": gorm.Expr("amount_usdt_origin + ?", amountOrigin)})
+		if res2.Error != nil {
+			return errors.New(500, "UPDATE_USER_ERROR", "用户信息修改失败")
+		}
+
+		var userBalanceRecode UserBalanceRecord
+		userBalanceRecode.UserId = userId
+		userBalanceRecode.Type = "deposit_admin"
+		userBalanceRecode.CoinType = coinType
+		userBalanceRecode.AmountNew = amount
+		userBalanceRecode.Amount = int64(amountOrigin)
+		res := ui.data.DB(ctx).Table("user_balance_record").Create(&userBalanceRecode)
+		if res.Error != nil {
+			return errors.New(500, "CREATE_LOCATION_ERROR", "占位信息创建失败")
+		}
+
+		var (
+			err    error
+			reward Reward
+		)
+
+		reward.UserId = userId
+		reward.AmountNew = float64(amountOrigin)
+		reward.Type = coinType // 本次分红的行为类型
+		reward.TypeRecordId = int64(num)
+		reward.Reason = "buy_admin" // 给我分红的理由
+		reward.LocationType = buyTwo
+		reward.Amount = int64(addressId)
+		reward.AmountB = int64(goodId)
+		reward.Status = 1
+		err = ui.data.DB(ctx).Table("reward").Create(&reward).Error
+		if err != nil {
+			return errors.New(500, "CREATE_LOCATION_ERROR", "占位信息创建失败")
+		}
+	} else {
+		return errors.New(500, "UPDATE_USER_ERROR", "未知类型，修改余额")
+	}
+
+	return nil
+}
+
 // UpdateUserNewTwoNew .
 func (ui *UserInfoRepo) UpdateUserNewTwoNew(ctx context.Context, userId int64, amount float64, num, amountOrigin uint64, buyType, addressId, goodId uint64, coinType string) error {
 	if "USDT" == coinType {
