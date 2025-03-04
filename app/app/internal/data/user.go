@@ -5590,8 +5590,9 @@ func (ub UserBalanceRepo) GetUserBalanceRecordCountTotalToday(ctx context.Contex
 	if err := ub.data.db.Table("user_balance_record").
 		Where("type=?", "deposit").
 		Where("coin_type=?", "USDT").
+		Group("user_id").
 		Where("created_at>=?", todayStart).Where("created_at<?", todayEnd).
-		Select("count(user_id) as total").Take(&total).Error; err != nil {
+		Select("count(id) as total").Take(&total).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return total.Total, errors.NotFound("USER_BALANCE_RECORD_NOT_FOUND", "user balance not found")
 		}
