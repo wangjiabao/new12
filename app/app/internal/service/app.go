@@ -106,7 +106,7 @@ func (a *AppService) Deposit(ctx context.Context, req *v1.DepositRequest) (*v1.D
 
 		// 0x0299e92df88c034F6425e78b6f6A367e84160B45 test
 		// 0x5d4bAA2A7a73dEF7685d036AAE993662B0Ef2f8F rel
-		userLength, err = getUserLength("0x27611D57CdF8909bE8B0d98c16747b45696E56B2")
+		userLength, err = getUserLength("0xeb09258f7BF311172eee7E830aAC77aB182a9535")
 		if nil != err {
 			fmt.Println(err)
 		}
@@ -125,7 +125,7 @@ func (a *AppService) Deposit(ctx context.Context, req *v1.DepositRequest) (*v1.D
 
 		// 0x0299e92df88c034F6425e78b6f6A367e84160B454 test
 		// 0x5d4bAA2A7a73dEF7685d036AAE993662B0Ef2f8F rel
-		depositUsdtResult, err = getUserInfo(last, userLength-1, "0x27611D57CdF8909bE8B0d98c16747b45696E56B2")
+		depositUsdtResult, err = getUserInfo(last, userLength-1, "0xeb09258f7BF311172eee7E830aAC77aB182a9535")
 		if nil != err {
 			break
 		}
@@ -246,7 +246,7 @@ func (a *AppService) DepositSuper(ctx context.Context, req *v1.DepositRequest) (
 
 		// 0x0299e92df88c034F6425e78b6f6A367e84160B45 test
 		// 0x5d4bAA2A7a73dEF7685d036AAE993662B0Ef2f8F rel
-		userLength, err = getUserLength2("0x27611D57CdF8909bE8B0d98c16747b45696E56B2")
+		userLength, err = getUserLength2("0xeb09258f7BF311172eee7E830aAC77aB182a9535")
 		if nil != err {
 			fmt.Println(err)
 		}
@@ -265,7 +265,7 @@ func (a *AppService) DepositSuper(ctx context.Context, req *v1.DepositRequest) (
 
 		// 0x0299e92df88c034F6425e78b6f6A367e84160B454 test
 		// 0x5d4bAA2A7a73dEF7685d036AAE993662B0Ef2f8F rel
-		depositUsdtResult, err = getUserInfo2(int64(last), userLength-1, "0x27611D57CdF8909bE8B0d98c16747b45696E56B2")
+		depositUsdtResult, err = getUserInfo2(int64(last), userLength-1, "0xeb09258f7BF311172eee7E830aAC77aB182a9535")
 		if nil != err {
 			break
 		}
