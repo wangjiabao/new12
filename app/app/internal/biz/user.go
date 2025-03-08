@@ -911,17 +911,17 @@ func (uuc *UserUseCase) AdminUserList(ctx context.Context, req *v1.AdminUserList
 		}
 
 		currentLevel := 0
-		if 3000 <= vUsers.MyTotalAmount {
+		if 3000 <= vUsers.MyTotalAmount && 7000 > vUsers.MyTotalAmount {
 			currentLevel = 1
-		} else if 7000 <= vUsers.MyTotalAmount {
+		} else if 7000 <= vUsers.MyTotalAmount && 21000 > vUsers.MyTotalAmount {
 			currentLevel = 2
-		} else if 21000 <= vUsers.MyTotalAmount {
+		} else if 21000 <= vUsers.MyTotalAmount && 63000 > vUsers.MyTotalAmount {
 			currentLevel = 3
-		} else if 63000 <= vUsers.MyTotalAmount {
+		} else if 63000 <= vUsers.MyTotalAmount && 190000 > vUsers.MyTotalAmount {
 			currentLevel = 4
-		} else if 190000 <= vUsers.MyTotalAmount {
+		} else if 190000 <= vUsers.MyTotalAmount && 570000 > vUsers.MyTotalAmount {
 			currentLevel = 5
-		} else if 570000 <= vUsers.MyTotalAmount {
+		} else if 570000 <= vUsers.MyTotalAmount && 1710000 > vUsers.MyTotalAmount {
 			currentLevel = 6
 		} else if 1710000 <= vUsers.MyTotalAmount {
 			currentLevel = 7
@@ -3183,22 +3183,22 @@ func (uuc *UserUseCase) AdminDailyLocationReward(ctx context.Context, req *v1.Ad
 			}
 
 			tmpLastLevelNum := float64(0)
-			if 3000 <= usersMap[tmpUserId].MyTotalAmount {
+			if 3000 <= usersMap[tmpUserId].MyTotalAmount && 7000 > usersMap[tmpUserId].MyTotalAmount {
 				currentLevel = 1
 				tmpLastLevelNum = vv1
-			} else if 7000 <= usersMap[tmpUserId].MyTotalAmount {
+			} else if 7000 <= usersMap[tmpUserId].MyTotalAmount && 21000 > usersMap[tmpUserId].MyTotalAmount {
 				currentLevel = 2
 				tmpLastLevelNum = v2
-			} else if 21000 <= usersMap[tmpUserId].MyTotalAmount {
+			} else if 21000 <= usersMap[tmpUserId].MyTotalAmount && 63000 > usersMap[tmpUserId].MyTotalAmount {
 				currentLevel = 3
 				tmpLastLevelNum = v3
-			} else if 63000 <= usersMap[tmpUserId].MyTotalAmount {
+			} else if 63000 <= usersMap[tmpUserId].MyTotalAmount && 190000 > usersMap[tmpUserId].MyTotalAmount {
 				currentLevel = 4
 				tmpLastLevelNum = v4
-			} else if 190000 <= usersMap[tmpUserId].MyTotalAmount {
+			} else if 190000 <= usersMap[tmpUserId].MyTotalAmount && 570000 > usersMap[tmpUserId].MyTotalAmount {
 				currentLevel = 5
 				tmpLastLevelNum = v5
-			} else if 570000 <= usersMap[tmpUserId].MyTotalAmount {
+			} else if 570000 <= usersMap[tmpUserId].MyTotalAmount && 1710000 > usersMap[tmpUserId].MyTotalAmount {
 				currentLevel = 6
 				tmpLastLevelNum = v6
 			} else if 1710000 <= usersMap[tmpUserId].MyTotalAmount {
