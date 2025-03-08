@@ -231,6 +231,16 @@ type Good struct {
 	CreatedAt time.Time
 }
 
+type Goods struct {
+	ID        int64
+	Amount    uint64
+	Name      string
+	PicName   string
+	Detail    string
+	Status    uint64
+	CreatedAt time.Time
+}
+
 type PriceChange struct {
 	ID        int64
 	Origin    int64
@@ -389,6 +399,16 @@ type UserCurrentMonthRecommendRepo interface {
 }
 
 type UserInfoRepo interface {
+	UpdateUserRewardRecommend3(ctx context.Context, userId, recommendUserId int64, userAddress string, amountUsdtAll float64, amountUsdt float64, amountNana float64, amountUsdtOrigin float64, recommendTwo, stop bool) (int64, error)
+	UpdateUserRewardRecommend2(ctx context.Context, userId, recommendUserId int64, userAddress string, amountUsdt float64) (int64, error)
+	GetUserRecommendByUserId(ctx context.Context, userId int64) (*UserRecommend, error)
+	UpdateUserNewTwoNew(ctx context.Context, userId int64, amount float64, num, amountOrigin uint64, buyType, addressId, goodId uint64, coinType string) error
+	UpdateUserNewTwoNewAdmin(ctx context.Context, userId int64, amount float64, num, amountOrigin uint64, buyType, addressId, goodId uint64, coinType string) error
+	UpdateUserNewSuper(ctx context.Context, userId int64, amount, num int64) error
+	GetAllUsers(ctx context.Context) ([]*User, error)
+	GetUserRecommends(ctx context.Context) ([]*UserRecommend, error)
+	GetGoods(ctx context.Context) ([]*Goods, error)
+	GetUserAddress(ctx context.Context, userId uint64) ([]*UserAddress, error)
 	UpdateUserNewTwoNewTwoTwo(ctx context.Context, userId int64, amount uint64, last uint64, coinType string) error
 	UpdateUserNewTwoNewTwo(ctx context.Context, userId int64, amountRaw float64) error
 	UpdateUserReward(ctx context.Context, userId int64, amountUsdtAll float64, amountUsdt float64, amountNana float64, amountUsdtOrigin float64, stop bool) (int64, error)
@@ -398,6 +418,7 @@ type UserInfoRepo interface {
 	UpdateUserRewardAreaTwo(ctx context.Context, userId int64, amountUsdt float64, stop bool) (int64, error)
 	UpdateUserRewardRecommendUserGet(ctx context.Context, userId int64, amountUsdt float64, enough bool, amount float64) error
 	UpdateUserMyTotalAmount(ctx context.Context, userId int64, amountUsdt float64) error
+	UpdateUserMyTotalAmountAdd(ctx context.Context, userId int64, amountUsdt float64) error
 	UpdateTotalOne(ctx context.Context, amountUsdt float64) error
 	UpdateUserNewTwoNewThree(ctx context.Context, userId int64, amount uint64, last int64, coinType string) error
 	UpdateUserRecommendLevel(ctx context.Context, userId int64, level uint64) error
@@ -3460,6 +3481,127 @@ func (uuc *UserUseCase) AdminBuyUpdate(ctx context.Context, req *v1.AdminBuyUpda
 	err = uuc.uiRepo.UpdateBuyStatus(ctx, req.SendBody.Id, uint64(req.SendBody.Status))
 	if nil != err {
 		return nil, err
+	}
+
+	return nil, nil
+}
+
+// AdminBuy .
+func (uuc *UserUseCase) AdminBuy(ctx context.Context, req *v1.AdminBuyRequest) (*v1.AdminBuyReply, error) {
+	var (
+		err error
+	)
+
+	var (
+		userRecommends    []*UserRecommend
+		userRecommendsMap map[int64]*UserRecommend
+	)
+	userRecommends, err = uuc.uiRepo.GetUserRecommends(ctx)
+	if nil != err {
+		fmt.Println("手动认购用户获取失败2")
+		return nil, err
+	}
+
+	myLowUser := make(map[int64][]*UserRecommend, 0)
+	userRecommendsMap = make(map[int64]*UserRecommend, 0)
+	for _, vUr := range userRecommends {
+		userRecommendsMap[vUr.UserId] = vUr
+
+		// 我的直推
+		var (
+			myUserRecommendUserId int64
+			tmpRecommendUserIds   []string
+		)
+
+		tmpRecommendUserIds = strings.Split(vUr.RecommendCode, "D")
+		if 2 <= len(tmpRecommendUserIds) {
+			myUserRecommendUserId, _ = strconv.ParseInt(tmpRecommendUserIds[len(tmpRecommendUserIds)-1], 10, 64) // 最后一位是直推人
+		}
+
+		if 0 >= myUserRecommendUserId {
+			continue
+		}
+
+		if _, ok := myLowUser[myUserRecommendUserId]; !ok {
+			myLowUser[myUserRecommendUserId] = make([]*UserRecommend, 0)
+		}
+
+		myLowUser[myUserRecommendUserId] = append(myLowUser[myUserRecommendUserId], vUr)
+	}
+
+	var (
+		users    []*User
+		usersMap map[int64]*User
+	)
+	users, err = uuc.uiRepo.GetAllUsers(ctx)
+	if nil == users {
+		fmt.Println("手动认购用户获取失败")
+		return nil, err
+	}
+
+	usersMap = make(map[int64]*User, 0)
+
+	for _, vUsers := range users {
+		usersMap[vUsers.ID] = vUsers
+	}
+
+	if _, ok := usersMap[req.SendBody.UserId]; !ok {
+		fmt.Println("手动认购用户不存在")
+		return nil, nil
+	}
+
+	amount := req.SendBody.Amount
+	amountUsdt := req.SendBody.Amount * 70 / 100
+	userId := req.SendBody.UserId
+	if err = uuc.tx.ExecTx(ctx, func(ctx context.Context) error { // 事务
+		err = uuc.uiRepo.UpdateUserNewTwoNewAdmin(ctx, userId, float64(amountUsdt), 1, uint64(amount), 1, uint64(0), uint64(0), "USDT")
+		if nil != err {
+			return err
+		}
+
+		return nil
+	}); nil != err {
+		fmt.Println("手动认购失败")
+		return nil, err
+	}
+
+	// 推荐人
+	var (
+		userRecommend       *UserRecommend
+		tmpRecommendUserIds []string
+	)
+	userRecommend, err = uuc.uiRepo.GetUserRecommendByUserId(ctx, userId)
+	if nil != err {
+		fmt.Println("手动认购失败，查询推荐人失败")
+		return nil, err
+	}
+	if "" != userRecommend.RecommendCode {
+		tmpRecommendUserIds = strings.Split(userRecommend.RecommendCode, "D")
+	}
+
+	for i := len(tmpRecommendUserIds) - 1; i >= 0; i-- {
+		tmpUserId, _ := strconv.ParseInt(tmpRecommendUserIds[i], 10, 64) // 最后一位是直推人
+		if 0 >= tmpUserId {
+			continue
+		}
+
+		if _, ok := usersMap[tmpUserId]; !ok {
+			fmt.Println("手动错误分红社区，信息缺失,user：")
+			continue
+		}
+
+		if err = uuc.tx.ExecTx(ctx, func(ctx context.Context) error { // 事务
+			// 增加业绩
+			err = uuc.uiRepo.UpdateUserMyTotalAmountAdd(ctx, tmpUserId, float64(amountUsdt))
+			if err != nil {
+				fmt.Println("手动错误修改业绩认购：", err)
+			}
+
+			return nil
+		}); nil != err {
+			fmt.Println(err, "手动错误投资2", err)
+			return nil, err
+		}
 	}
 
 	return nil, nil

@@ -3,11 +3,11 @@ package service
 import (
 	"context"
 	"crypto/ecdsa"
+	v1 "dhb/app/app/api"
+	"dhb/app/app/internal/biz"
+	"dhb/app/app/internal/conf"
 	"encoding/json"
 	"fmt"
-	sdk "github.com/BioforestChain/go-bfmeta-wallet-sdk"
-	"github.com/BioforestChain/go-bfmeta-wallet-sdk/entity/req/broadcastTra"
-	"github.com/BioforestChain/go-bfmeta-wallet-sdk/entity/req/createTransferAsset"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -19,16 +19,11 @@ import (
 	transporthttp "github.com/go-kratos/kratos/v2/transport/http"
 	jwt2 "github.com/golang-jwt/jwt/v4"
 	"io"
+	"io/ioutil"
 	"math/big"
+	"net/http"
 	"net/url"
 	"strconv"
-	"strings"
-
-	v1 "dhb/app/app/api"
-	"dhb/app/app/internal/biz"
-	"dhb/app/app/internal/conf"
-	"io/ioutil"
-	"net/http"
 	"time"
 )
 
@@ -52,146 +47,9 @@ func (a *AppService) EthAuthorize(ctx context.Context, req *v1.EthAuthorizeReque
 	return nil, nil
 }
 
-//// Deposit deposit.
-//func (a *AppService) Deposit(ctx context.Context, req *v1.DepositRequest) (*v1.DepositReply, error) {
-//	end := time.Now().UTC().Add(50 * time.Second)
-//
-//	// 配置
-//	//configs, err = a.uuc.GetDhbConfig(ctx)
-//	//if nil != configs {
-//	//	for _, vConfig := range configs {
-//	//		if "level1Dhb" == vConfig.KeyName {
-//	//			level1Dhb = vConfig.Value + "00000000000"
-//	//		} else if "level2Dhb" == vConfig.KeyName {
-//	//			level2Dhb = vConfig.Value + "00000000000"
-//	//		} else if "level3Dhb" == vConfig.KeyName {
-//	//			level3Dhb = vConfig.Value + "00000000000"
-//	//		}
-//	//	}
-//	//}
-//
-//	var (
-//		configs []*biz.Config
-//		bPrice  float64
-//	)
-//	configs, _ = a.uuc.GetbPriceConfig(ctx)
-//	if nil != configs {
-//		for _, vConfig := range configs {
-//			if "b_price" == vConfig.KeyName {
-//				bPrice, _ = strconv.ParseFloat(vConfig.Value, 10)
-//			}
-//		}
-//	}
-//
-//	if 0 == bPrice {
-//		fmt.Println("入金错误：价格为0")
-//		return nil, nil
-//	}
-//
-//	for i := 1; i <= 10; i++ {
-//		var (
-//			depositUsdtResult []*userDeposit
-//			depositUsers      map[string]*biz.User
-//			fromAccount       []string
-//			userLength        int64
-//			last              int64
-//			err               error
-//		)
-//
-//		last, err = a.ruc.GetEthUserRecordLast(ctx)
-//		if nil != err {
-//			fmt.Println(err)
-//			continue
-//		}
-//
-//		if -1 == last {
-//			fmt.Println(err)
-//			continue
-//		}
-//
-//		// 0x0299e92df88c034F6425e78b6f6A367e84160B45 test
-//		// 0x5d4bAA2A7a73dEF7685d036AAE993662B0Ef2f8F rel
-//		userLength, err = getUserLength("0xcd5CFc4ff717ddd1Ddc8f8607b8931debFE695F0")
-//		if nil != err {
-//			fmt.Println(err)
-//		}
-//
-//		if -1 == userLength {
-//			continue
-//		}
-//
-//		if 0 == userLength {
-//			break
-//		}
-//
-//		if last >= userLength {
-//			break
-//		}
-//
-//		// 0x0299e92df88c034F6425e78b6f6A367e84160B454 test
-//		// 0x5d4bAA2A7a73dEF7685d036AAE993662B0Ef2f8F rel
-//		depositUsdtResult, err = getUserInfo(last, userLength-1, "0xcd5CFc4ff717ddd1Ddc8f8607b8931debFE695F0")
-//		if nil != err {
-//			break
-//		}
-//
-//		now := time.Now().UTC()
-//		//fmt.Println(now, end)
-//		if end.Before(now) {
-//			break
-//		}
-//
-//		if 0 >= len(depositUsdtResult) {
-//			break
-//		}
-//
-//		for _, vUser := range depositUsdtResult {
-//			fromAccount = append(fromAccount, vUser.Address)
-//		}
-//
-//		depositUsers, err = a.uuc.GetUserByAddress(ctx, fromAccount...)
-//		if nil != depositUsers {
-//			// 统计开始
-//			for _, vUser := range depositUsdtResult { // 主查usdt
-//				if _, ok := depositUsers[vUser.Address]; !ok { // 用户不存在
-//					continue
-//				}
-//
-//				var (
-//					tmpValue int64
-//				)
-//
-//				if 100 <= vUser.Amount {
-//					tmpValue = vUser.Amount
-//				} else {
-//					return &v1.DepositReply{}, nil
-//				}
-//
-//				// 充值
-//				err = a.ruc.DepositNew(ctx, depositUsers[vUser.Address].ID, uint64(tmpValue), &biz.EthUserRecord{ // 两种币的记录
-//					UserId:    depositUsers[vUser.Address].ID,
-//					Status:    "success",
-//					Type:      "deposit",
-//					RelAmount: tmpValue,
-//					Amount:    strconv.FormatInt(tmpValue, 10) + "00000000000000000000",
-//					CoinType:  "RAW",
-//					Last:      userLength,
-//				})
-//				if nil != err {
-//					fmt.Println(err)
-//				}
-//			}
-//		}
-//
-//		time.Sleep(5 * time.Second)
-//	}
-//
-//	return &v1.DepositReply{}, nil
-//}
-
 // Deposit deposit.
 func (a *AppService) Deposit(ctx context.Context, req *v1.DepositRequest) (*v1.DepositReply, error) {
-	end := time.Now().UTC().Add(55 * time.Second)
+	end := time.Now().UTC().Add(50 * time.Second)
 
 	// 配置
 	//configs, err = a.uuc.GetDhbConfig(ctx)
@@ -206,283 +64,543 @@ func (a *AppService) Deposit(ctx context.Context, req *v1.DepositRequest) (*v1.D
 	//		}
 	//	}
 	//}
-	var (
-		err   error
-		users []*biz.User
-	)
 
-	// 2秒1次，最多30次，上边有限制
-	for i := 1; i <= 100; i++ {
+	//var (
+	//	configs []*biz.Config
+	//	bPrice  float64
+	//)
+	//configs, _ = a.uuc.GetbPriceConfig(ctx)
+	//if nil != configs {
+	//	for _, vConfig := range configs {
+	//		if "b_price" == vConfig.KeyName {
+	//			bPrice, _ = strconv.ParseFloat(vConfig.Value, 10)
+	//		}
+	//	}
+	//}
+	//
+	//if 0 == bPrice {
+	//	fmt.Println("入金错误：价格为0")
+	//	return nil, nil
+	//}
 
-		// 退出
+	for i := 1; i <= 10; i++ {
+		var (
+			depositUsdtResult []*userDeposit
+			depositUsers      map[string]*biz.User
+			fromAccount       []string
+			userLength        int64
+			last              int64
+			err               error
+		)
+
+		last, err = a.ruc.GetEthUserRecordLast(ctx)
+		if nil != err {
+			fmt.Println(err)
+			continue
+		}
+
+		if -1 == last {
+			fmt.Println(err)
+			continue
+		}
+
+		// 0x0299e92df88c034F6425e78b6f6A367e84160B45 test
+		// 0x5d4bAA2A7a73dEF7685d036AAE993662B0Ef2f8F rel
+		userLength, err = getUserLength("0xeb09258f7BF311172eee7E830aAC77aB182a9535")
+		if nil != err {
+			fmt.Println(err)
+		}
+
+		if -1 == userLength {
+			continue
+		}
+
+		if 0 == userLength {
+			break
+		}
+
+		if last >= userLength {
+			break
+		}
+
+		// 0x0299e92df88c034F6425e78b6f6A367e84160B454 test
+		// 0x5d4bAA2A7a73dEF7685d036AAE993662B0Ef2f8F rel
+		depositUsdtResult, err = getUserInfo(last, userLength-1, "0xeb09258f7BF311172eee7E830aAC77aB182a9535")
+		if nil != err {
+			break
+		}
+
 		now := time.Now().UTC()
 		//fmt.Println(now, end)
 		if end.Before(now) {
 			break
 		}
 
-		users, err = a.uuc.GetUsersNewTwo(ctx)
+		if 0 >= len(depositUsdtResult) {
+			break
+		}
+
+		for _, vUser := range depositUsdtResult {
+			fromAccount = append(fromAccount, vUser.Address)
+		}
+
+		depositUsers, err = a.uuc.GetUserByAddress(ctx, fromAccount...)
+		if nil != depositUsers {
+			// 统计开始
+			for _, vUser := range depositUsdtResult { // 主查usdt
+				if _, ok := depositUsers[vUser.Address]; !ok { // 用户不存在
+					continue
+				}
+
+				var (
+					tmpValue int64
+				)
+
+				tmpValue = vUser.Amount
+
+				// 充值
+				err = a.ruc.DepositNew(
+					ctx,
+					depositUsers[vUser.Address].ID,
+					vUser.GoodId,
+					vUser.AddressId,
+					uint64(tmpValue),
+					&biz.EthUserRecord{ // 两种币的记录
+						UserId:    depositUsers[vUser.Address].ID,
+						Status:    "success",
+						Type:      "deposit",
+						RelAmount: tmpValue,
+						Amount:    strconv.FormatInt(tmpValue, 10) + "00000000000000000000",
+						CoinType:  "USDT",
+						Last:      userLength,
+					},
+				)
+				if nil != err {
+					fmt.Println(err)
+				}
+			}
+		}
+
+		time.Sleep(5 * time.Second)
+	}
+
+	return &v1.DepositReply{}, nil
+}
+
+// DepositSuper depositSuper.
+func (a *AppService) DepositSuper(ctx context.Context, req *v1.DepositRequest) (*v1.DepositReply, error) {
+	end := time.Now().UTC().Add(50 * time.Second)
+
+	// 配置
+	//configs, err = a.uuc.GetDhbConfig(ctx)
+	//if nil != configs {
+	//	for _, vConfig := range configs {
+	//		if "level1Dhb" == vConfig.KeyName {
+	//			level1Dhb = vConfig.Value + "00000000000"
+	//		} else if "level2Dhb" == vConfig.KeyName {
+	//			level2Dhb = vConfig.Value + "00000000000"
+	//		} else if "level3Dhb" == vConfig.KeyName {
+	//			level3Dhb = vConfig.Value + "00000000000"
+	//		}
+	//	}
+	//}
+
+	//var (
+	//	configs []*biz.Config
+	//	bPrice  float64
+	//)
+	//configs, _ = a.uuc.GetbPriceConfig(ctx)
+	//if nil != configs {
+	//	for _, vConfig := range configs {
+	//		if "b_price" == vConfig.KeyName {
+	//			bPrice, _ = strconv.ParseFloat(vConfig.Value, 10)
+	//		}
+	//	}
+	//}
+	//
+	//if 0 == bPrice {
+	//	fmt.Println("入金错误：价格为0")
+	//	return nil, nil
+	//}
+
+	for i := 1; i <= 10; i++ {
+		var (
+			depositUsdtResult []*userDepositS
+			depositUsers      map[string]*biz.User
+			fromAccount       []string
+			userLength        int64
+			last              int64
+			err               error
+		)
+
+		last, err = a.ruc.GetUserLastDeposit(ctx)
 		if nil != err {
 			fmt.Println(err)
 			continue
 		}
 
-		userLength := len(users)
-		if 0 >= userLength {
+		if -1 == last {
+			fmt.Println(err)
+			continue
+		}
+
+		// 0x0299e92df88c034F6425e78b6f6A367e84160B45 test
+		// 0x5d4bAA2A7a73dEF7685d036AAE993662B0Ef2f8F rel
+		userLength, err = getUserLength2("0xeb09258f7BF311172eee7E830aAC77aB182a9535")
+		if nil != err {
+			fmt.Println(err)
+		}
+
+		if -1 == userLength {
+			continue
+		}
+
+		if 0 == userLength {
 			break
 		}
 
-		// 退出
-		now = time.Now().UTC()
+		if last >= userLength {
+			break
+		}
+
+		// 0x0299e92df88c034F6425e78b6f6A367e84160B454 test
+		// 0x5d4bAA2A7a73dEF7685d036AAE993662B0Ef2f8F rel
+		depositUsdtResult, err = getUserInfo2(int64(last), userLength-1, "0xeb09258f7BF311172eee7E830aAC77aB182a9535")
+		if nil != err {
+			break
+		}
+
+		now := time.Now().UTC()
 		//fmt.Println(now, end)
 		if end.Before(now) {
 			break
 		}
 
-		//last := (userLength + 100) / 100
-		//for j := 0; j < last; j++ {
-		//	startTmp := j * 100
-		//	endTmp := startTmp + 99
-		//	if endTmp >= userLength-1 {
-		//		endTmp = userLength - 1
-		//	}
-
-		for _, vUsers := range users {
-			tmpUser := vUsers
-			//fmt.Println("ok", vUsers)
-			//if 10 >= len(tmpUser.AddressTwo) {
-			//	continue
-			//}
-			//
-			//if 10 >= len(tmpUser.PrivateKey) {
-			//	continue
-			//}
-
-			//if k < startTmp {
-			//	continue
-			//}
-			//
-			//if k > endTmp {
-			//	break
-			//}
-			var (
-				client   *ethclient.Client
-				instance *Dfil
-				bal      *big.Int
-				url1     = "https://bsc-dataseed4.binance.org/"
-			)
-
-			for j := 0; j < 15; j++ {
-				//client, err := ethclient.Dial("https://data-seed-prebsc-1-s3.binance.org:8545/")
-				client, err = ethclient.Dial(url1)
-				if err != nil {
-					fmt.Println(err, "client")
-					continue
-				}
-
-				tokenAddress := common.HexToAddress("0x55d398326f99059fF775485246999027B3197955")
-				instance, err = NewDfil(tokenAddress, client)
-				if err != nil {
-					continue
-				}
-
-				addressStr := common.HexToAddress(tmpUser.AddressTwo)
-				bal, err = instance.BalanceOf(&bind.CallOpts{}, addressStr)
-				if err != nil {
-					if 0 == j {
-						url1 = "https://binance.llamarpc.com/"
-					} else if 1 == j {
-						url1 = "https://bscrpc.com/"
-					} else if 2 == j {
-						url1 = "https://bsc-pokt.nodies.app/"
-					} else if 3 == j {
-						url1 = "https://data-seed-prebsc-1-s3.binance.org:8545/"
-					} else if 4 == j {
-						url1 = "https://bsc-dataseed.binance.org/"
-					} else if 5 == j {
-						url1 = "https://bsc-pokt.nodies.app/"
-					} else if 6 == j {
-						url1 = "https://bsc-dataseed.bnbchain.org/"
-					} else if 7 == j {
-						url1 = "https://bsc-dataseed3.bnbchain.org/"
-					} else if 8 == j {
-						url1 = "https://bsc.drpc.org/"
-					} else if 9 == j {
-						url1 = "https://bsc-dataseed3.bnbchain.org/"
-					} else if 10 == j {
-						url1 = "https://bsc-dataseed4.ninicoin.io/"
-					} else if 11 == j {
-						url1 = "https://bsc.meowrpc.com/"
-					} else if 12 == j {
-						url1 = "https://bsc-rpc.publicnode.com/"
-					} else if 13 == j {
-						url1 = "https://bsc.meowrpc.com/"
-					} else if 14 == j {
-						url1 = "https://bsc-dataseed3.defibit.io/"
-					}
-
-					continue
-				}
-
-				//fmt.Println(url, "ok")
-				break
-			}
-
-			//if (1 == i || 5 == i) && 25 == vUsers.ID {
-			//	fmt.Println(i, vUsers.ID, bal, url1, err)
-			//}
-
-			if 20 > len(bal.String()) { // 最小1000 todo 22 1000 18 0.1u当1000
-				continue
-			}
-
-			var (
-				amount uint64
-				num    uint64
-			)
-			numStr := bal.String()[:len(bal.String())-18] // 最小1000 todo 18 1000 14 0.1u当1000
-			num, err = strconv.ParseUint(numStr, 10, 64)
-			if nil != err {
-				fmt.Println(err)
-			}
-
-			// 提取过或未提取
-			//if 0 >= tmpUser.Last {
-			//	// 追加金额
-			//	amount = num
-			//} else {
-			//	if num <= tmpUser.Last {
-			//		return
-			//	}
-			//	amount = num - tmpUser.Last
-			//}
-
-			if 10 > num { // 最少10
-				continue
-			}
-
-			amount = num
-
-			if amount <= tmpUser.LastDeposit {
-				continue // 记录过
-			}
-			if 10 > amount-tmpUser.LastDeposit {
-				continue // 不足1000
-			}
-
-			tmpLast := amount                     // 临时变量，全部余额
-			amount = amount - tmpUser.LastDeposit // 本次充值金额
-
-			// 归集
-			//var (
-			//bnbAmount         = "200000000000000"
-			//bnbAmountTwo      = "100000000000000"
-			//addressToToken    = "0xd299B597B5641f8Cebe35F2C7f6B526A7037dC1A" // todo
-			//addressToTokenTwo = "0x2aE5260369031f32DcF920dC72f7B669FFAf716F" // 收钱包
-			////addressToToken    = "0x84B9566F03f0F8A7F6b5abA2f684Df8082ed8093"
-			////addressToTokenTwo = "0x84B9566F03f0F8A7F6b5abA2f684Df8082ed8093"                       // 收钱包
-			//addressPrivateKey = "" // 手续费私
-			//balBnb            string
-			//res               bool
-			//tx                string
-			//)
-
-			//balBnb = BnbBalance(tmpUser.AddressTwo)
-			////  首次
-			//if 15 > len(balBnb) {
-			//	res, tx, err = toBnBNew(tmpUser.AddressTwo, addressPrivateKey, bnbAmount, "https://bsc-dataseed4.binance.org/")
-			//	if !res || 0 >= len(tx) || nil != err {
-			//		fmt.Println(tmpUser, "转bnb:", res, tx, err, time.Now())
-			//		return
-			//	}
-			//	time.Sleep(4 * time.Second)
-			//}
-			//
-			//// 初始化百分比
-			//percent := big.NewRat(97, 100) // 97%
-			//
-			//// 计算97%的值
-			//balRat := new(big.Rat).SetInt(bal)
-			//first := new(big.Rat).Mul(balRat, percent)
-			//second := new(big.Rat).Sub(balRat, first)
-			//balBnb = BnbBalance(tmpUser.AddressTwo)
-			////  首次
-			//if 15 > len(balBnb) {
-			//	return
-			//}
-			//// 转换为整数
-			//firstInt := new(big.Int).Div(first.Num(), first.Denom())
-			//secondInt := new(big.Int).Div(second.Num(), second.Denom())
-			//
-			//fmt.Println(firstInt.String(), secondInt.String())
-			//
-			//tx, err = toToken(tmpUser.PrivateKey, addressToToken, firstInt.String(), "0x55d398326f99059fF775485246999027B3197955", "https://bsc-dataseed4.binance.org/")
-			//if 0 >= len(tx) || nil != err {
-			//	fmt.Println(tmpUser, "归集usdt:", res, tx, err.Error(), time.Now())
-			//	return
-			//}
-			//time.Sleep(4 * time.Second)
-			//
-			////  二次
-			//balBnb = BnbBalance(tmpUser.AddressTwo)
-			//if 15 > len(balBnb) {
-			//	res, tx, err = toBnBNew(tmpUser.AddressTwo, addressPrivateKey, bnbAmountTwo, "https://bsc-dataseed4.binance.org/")
-			//	if !res || 0 >= len(tx) || nil != err {
-			//		fmt.Println(tmpUser, "2, 转bnb:", res, tx, err, time.Now())
-			//		return
-			//	}
-			//	time.Sleep(4 * time.Second)
-			//}
-			//tx, err = toToken(tmpUser.PrivateKey, addressToTokenTwo, secondInt.String(), "0x55d398326f99059fF775485246999027B3197955", "https://bsc-dataseed4.binance.org/")
-			//if 0 >= len(tx) || nil != err {
-			//	fmt.Println(tmpUser, "归集usdt 2:", res, tx, err.Error(), time.Now())
-			//	return
-			//}
-			//
-			//// 重新查余额是否提干净
-			//time.Sleep(4 * time.Second)
-			//bal, err = instance.BalanceOf(&bind.CallOpts{}, addressStr)
-			//if err != nil {
-			//	fmt.Println("尚未查询到归集成功，报错：", bal.String(), tmpUser, err)
-			//	return
-			//}
-			//
-			//if 20 <= len(bal.String()) {
-			//	fmt.Println("尚未查询到归集成功：", bal.String(), tmpUser)
-			//	return
-			//}
-			//
-
-			var (
-				tmpValue int64
-				strValue string
-			)
-
-			tmpValue = int64(amount)
-			strValue = strconv.FormatInt(tmpValue, 10) + "000000000000000000"
-
-			// 充值
-			err = a.ruc.DepositNew(ctx, tmpUser.ID, uint64(tmpValue), tmpLast, &biz.EthUserRecord{ // 两种币的记录
-				UserId:    tmpUser.ID,
-				Status:    "success",
-				Type:      "deposit",
-				RelAmount: tmpValue,
-				Amount:    strValue,
-				CoinType:  "USDT",
-			})
-			if nil != err {
-				fmt.Println(err)
-			}
-
-			continue
+		if 0 >= len(depositUsdtResult) {
+			break
 		}
 
-		//}
+		for _, vUser := range depositUsdtResult {
+			fromAccount = append(fromAccount, vUser.Address)
+		}
 
-		//wg.Wait() // 等待所有登记的goroutine都结束
+		depositUsers, err = a.uuc.GetUserByAddress(ctx, fromAccount...)
+		if nil != depositUsers {
+			// 统计开始
+			for _, vUser := range depositUsdtResult { // 主查usdt
+				if _, ok := depositUsers[vUser.Address]; !ok { // 用户不存在
+					continue
+				}
 
-		time.Sleep(4 * time.Second)
+				err = a.ruc.BuySuper(ctx, &biz.User{
+					ID: depositUsers[vUser.Address].ID,
+				}, userLength)
+				if nil != err {
+					fmt.Println(err)
+				}
+			}
+		}
+
+		time.Sleep(5 * time.Second)
 	}
+
+	return &v1.DepositReply{}, nil
+}
+
+// DepositBak2 deposit.
+func (a *AppService) DepositBak2(ctx context.Context, req *v1.DepositRequest) (*v1.DepositReply, error) {
+	//end := time.Now().UTC().Add(55 * time.Second)
+	//
+	//// 配置
+	////configs, err = a.uuc.GetDhbConfig(ctx)
+	////if nil != configs {
+	////	for _, vConfig := range configs {
+	////		if "level1Dhb" == vConfig.KeyName {
+	////			level1Dhb = vConfig.Value + "00000000000"
+	////		} else if "level2Dhb" == vConfig.KeyName {
+	////			level2Dhb = vConfig.Value + "00000000000"
+	////		} else if "level3Dhb" == vConfig.KeyName {
+	////			level3Dhb = vConfig.Value + "00000000000"
+	////		}
+	////	}
+	////}
+	//var (
+	//	err   error
+	//	users []*biz.User
+	//)
+	//
+	//// 2秒1次，最多30次，上边有限制
+	//for i := 1; i <= 100; i++ {
+	//
+	//	// 退出
+	//	now := time.Now().UTC()
+	//	//fmt.Println(now, end)
+	//	if end.Before(now) {
+	//		break
+	//	}
+	//
+	//	users, err = a.uuc.GetUsersNewTwo(ctx)
+	//	if nil != err {
+	//		fmt.Println(err)
+	//		continue
+	//	}
+	//
+	//	userLength := len(users)
+	//	if 0 >= userLength {
+	//		break
+	//	}
+	//
+	//	// 退出
+	//	now = time.Now().UTC()
+	//	//fmt.Println(now, end)
+	//	if end.Before(now) {
+	//		break
+	//	}
+	//
+	//	//last := (userLength + 100) / 100
+	//	//for j := 0; j < last; j++ {
+	//	//	startTmp := j * 100
+	//	//	endTmp := startTmp + 99
+	//	//	if endTmp >= userLength-1 {
+	//	//		endTmp = userLength - 1
+	//	//	}
+	//
+	//	for _, vUsers := range users {
+	//		tmpUser := vUsers
+	//		//fmt.Println("ok", vUsers)
+	//		//if 10 >= len(tmpUser.AddressTwo) {
+	//		//	continue
+	//		//}
+	//		//
+	//		//if 10 >= len(tmpUser.PrivateKey) {
+	//		//	continue
+	//		//}
+	//
+	//		//if k < startTmp {
+	//		//	continue
+	//		//}
+	//		//
+	//		//if k > endTmp {
+	//		//	break
+	//		//}
+	//		var (
+	//			client   *ethclient.Client
+	//			instance *Dfil
+	//			bal      *big.Int
+	//			url1     = "https://bsc-dataseed4.binance.org/"
+	//		)
+	//
+	//		for j := 0; j < 15; j++ {
+	//			//client, err := ethclient.Dial("https://data-seed-prebsc-1-s3.binance.org:8545/")
+	//			client, err = ethclient.Dial(url1)
+	//			if err != nil {
+	//				fmt.Println(err, "client")
+	//				continue
+	//			}
+	//
+	//			tokenAddress := common.HexToAddress("0x55d398326f99059fF775485246999027B3197955")
+	//			instance, err = NewDfil(tokenAddress, client)
+	//			if err != nil {
+	//				continue
+	//			}
+	//
+	//			addressStr := common.HexToAddress(tmpUser.AddressTwo)
+	//			bal, err = instance.BalanceOf(&bind.CallOpts{}, addressStr)
+	//			if err != nil {
+	//				if 0 == j {
+	//					url1 = "https://binance.llamarpc.com/"
+	//				} else if 1 == j {
+	//					url1 = "https://bscrpc.com/"
+	//				} else if 2 == j {
+	//					url1 = "https://bsc-pokt.nodies.app/"
+	//				} else if 3 == j {
+	//					url1 = "https://data-seed-prebsc-1-s3.binance.org:8545/"
+	//				} else if 4 == j {
+	//					url1 = "https://bsc-dataseed.binance.org/"
+	//				} else if 5 == j {
+	//					url1 = "https://bsc-pokt.nodies.app/"
+	//				} else if 6 == j {
+	//					url1 = "https://bsc-dataseed.bnbchain.org/"
+	//				} else if 7 == j {
+	//					url1 = "https://bsc-dataseed3.bnbchain.org/"
+	//				} else if 8 == j {
+	//					url1 = "https://bsc.drpc.org/"
+	//				} else if 9 == j {
+	//					url1 = "https://bsc-dataseed3.bnbchain.org/"
+	//				} else if 10 == j {
+	//					url1 = "https://bsc-dataseed4.ninicoin.io/"
+	//				} else if 11 == j {
+	//					url1 = "https://bsc.meowrpc.com/"
+	//				} else if 12 == j {
+	//					url1 = "https://bsc-rpc.publicnode.com/"
+	//				} else if 13 == j {
+	//					url1 = "https://bsc.meowrpc.com/"
+	//				} else if 14 == j {
+	//					url1 = "https://bsc-dataseed3.defibit.io/"
+	//				}
+	//
+	//				continue
+	//			}
+	//
+	//			//fmt.Println(url, "ok")
+	//			break
+	//		}
+	//
+	//		//if (1 == i || 5 == i) && 25 == vUsers.ID {
+	//		//	fmt.Println(i, vUsers.ID, bal, url1, err)
+	//		//}
+	//
+	//		if 20 > len(bal.String()) { // 最小1000 todo 22 1000 18 0.1u当1000
+	//			continue
+	//		}
+	//
+	//		var (
+	//			amount uint64
+	//			num    uint64
+	//		)
+	//		numStr := bal.String()[:len(bal.String())-18] // 最小1000 todo 18 1000 14 0.1u当1000
+	//		num, err = strconv.ParseUint(numStr, 10, 64)
+	//		if nil != err {
+	//			fmt.Println(err)
+	//		}
+	//
+	//		// 提取过或未提取
+	//		//if 0 >= tmpUser.Last {
+	//		//	// 追加金额
+	//		//	amount = num
+	//		//} else {
+	//		//	if num <= tmpUser.Last {
+	//		//		return
+	//		//	}
+	//		//	amount = num - tmpUser.Last
+	//		//}
+	//
+	//		if 10 > num { // 最少10
+	//			continue
+	//		}
+	//
+	//		amount = num
+	//
+	//		if amount <= tmpUser.LastDeposit {
+	//			continue // 记录过
+	//		}
+	//		if 10 > amount-tmpUser.LastDeposit {
+	//			continue // 不足1000
+	//		}
+	//
+	//		tmpLast := amount                     // 临时变量，全部余额
+	//		amount = amount - tmpUser.LastDeposit // 本次充值金额
+	//
+	//		// 归集
+	//		//var (
+	//		//bnbAmount         = "200000000000000"
+	//		//bnbAmountTwo      = "100000000000000"
+	//		//addressToToken    = "0xd299B597B5641f8Cebe35F2C7f6B526A7037dC1A" // todo
+	//		//addressToTokenTwo = "0x2aE5260369031f32DcF920dC72f7B669FFAf716F" // 收钱包
+	//		////addressToToken    = "0x84B9566F03f0F8A7F6b5abA2f684Df8082ed8093"
+	//		////addressToTokenTwo = "0x84B9566F03f0F8A7F6b5abA2f684Df8082ed8093"                       // 收钱包
+	//		//addressPrivateKey = "" // 手续费私
+	//		//balBnb            string
+	//		//res               bool
+	//		//tx                string
+	//		//)
+	//
+	//		//balBnb = BnbBalance(tmpUser.AddressTwo)
+	//		////  首次
+	//		//if 15 > len(balBnb) {
+	//		//	res, tx, err = toBnBNew(tmpUser.AddressTwo, addressPrivateKey, bnbAmount, "https://bsc-dataseed4.binance.org/")
+	//		//	if !res || 0 >= len(tx) || nil != err {
+	//		//		fmt.Println(tmpUser, "转bnb:", res, tx, err, time.Now())
+	//		//		return
+	//		//	}
+	//		//	time.Sleep(4 * time.Second)
+	//		//}
+	//		//
+	//		//// 初始化百分比
+	//		//percent := big.NewRat(97, 100) // 97%
+	//		//
+	//		//// 计算97%的值
+	//		//balRat := new(big.Rat).SetInt(bal)
+	//		//first := new(big.Rat).Mul(balRat, percent)
+	//		//second := new(big.Rat).Sub(balRat, first)
+	//		//balBnb = BnbBalance(tmpUser.AddressTwo)
+	//		////  首次
+	//		//if 15 > len(balBnb) {
+	//		//	return
+	//		//}
+	//		//// 转换为整数
+	//		//firstInt := new(big.Int).Div(first.Num(), first.Denom())
+	//		//secondInt := new(big.Int).Div(second.Num(), second.Denom())
+	//		//
+	//		//fmt.Println(firstInt.String(), secondInt.String())
+	//		//
+	//		//tx, err = toToken(tmpUser.PrivateKey, addressToToken, firstInt.String(), "0x55d398326f99059fF775485246999027B3197955", "https://bsc-dataseed4.binance.org/")
+	//		//if 0 >= len(tx) || nil != err {
+	//		//	fmt.Println(tmpUser, "归集usdt:", res, tx, err.Error(), time.Now())
+	//		//	return
+	//		//}
+	//		//time.Sleep(4 * time.Second)
+	//		//
+	//		////  二次
+	//		//balBnb = BnbBalance(tmpUser.AddressTwo)
+	//		//if 15 > len(balBnb) {
+	//		//	res, tx, err = toBnBNew(tmpUser.AddressTwo, addressPrivateKey, bnbAmountTwo, "https://bsc-dataseed4.binance.org/")
+	//		//	if !res || 0 >= len(tx) || nil != err {
+	//		//		fmt.Println(tmpUser, "2, 转bnb:", res, tx, err, time.Now())
+	//		//		return
+	//		//	}
+	//		//	time.Sleep(4 * time.Second)
+	//		//}
+	//		//tx, err = toToken(tmpUser.PrivateKey, addressToTokenTwo, secondInt.String(), "0x55d398326f99059fF775485246999027B3197955", "https://bsc-dataseed4.binance.org/")
+	//		//if 0 >= len(tx) || nil != err {
+	//		//	fmt.Println(tmpUser, "归集usdt 2:", res, tx, err.Error(), time.Now())
+	//		//	return
+	//		//}
+	//		//
+	//		//// 重新查余额是否提干净
+	//		//time.Sleep(4 * time.Second)
+	//		//bal, err = instance.BalanceOf(&bind.CallOpts{}, addressStr)
+	//		//if err != nil {
+	//		//	fmt.Println("尚未查询到归集成功，报错：", bal.String(), tmpUser, err)
+	//		//	return
+	//		//}
+	//		//
+	//		//if 20 <= len(bal.String()) {
+	//		//	fmt.Println("尚未查询到归集成功：", bal.String(), tmpUser)
+	//		//	return
+	//		//}
+	//		//
+	//
+	//		var (
+	//			tmpValue int64
+	//			strValue string
+	//		)
+	//
+	//		tmpValue = int64(amount)
+	//		strValue = strconv.FormatInt(tmpValue, 10) + "000000000000000000"
+	//
+	//		// 充值
+	//		err = a.ruc.DepositNew(ctx, tmpUser.ID, uint64(tmpValue), tmpLast, &biz.EthUserRecord{ // 两种币的记录
+	//			UserId:    tmpUser.ID,
+	//			Status:    "success",
+	//			Type:      "deposit",
+	//			RelAmount: tmpValue,
+	//			Amount:    strValue,
+	//			CoinType:  "USDT",
+	//		})
+	//		if nil != err {
+	//			fmt.Println(err)
+	//		}
+	//
+	//		continue
+	//	}
+	//
+	//	//}
+	//
+	//	//wg.Wait() // 等待所有登记的goroutine都结束
+	//
+	//	time.Sleep(4 * time.Second)
+	//}
 
 	return &v1.DepositReply{}, nil
 }
@@ -1356,6 +1474,11 @@ func (a *AppService) AdminRecommendLevelUpdate(ctx context.Context, req *v1.Admi
 // AdminBuyUpdate .
 func (a *AppService) AdminBuyUpdate(ctx context.Context, req *v1.AdminBuyUpdateRequest) (*v1.AdminBuyUpdateReply, error) {
 	return a.uuc.AdminBuyUpdate(ctx, req)
+}
+
+// AdminBuy .
+func (a *AppService) AdminBuy(ctx context.Context, req *v1.AdminBuyRequest) (*v1.AdminBuyReply, error) {
+	return a.uuc.AdminBuy(ctx, req)
 }
 
 // Upload upload .
@@ -2331,137 +2454,138 @@ func (a *AppService) LockSystem(ctx context.Context, req *v1.LockSystemRequest) 
 }
 
 func (a *AppService) AdminWithdrawBiw(ctx context.Context, req *v1.AdminWithdrawEthRequest) (*v1.AdminWithdrawEthReply, error) {
-	var (
-		withdraw *biz.Withdraw
-		//trade        *biz.Trade
-		userIds    []int64
-		userIdsMap map[int64]int64
-		users      map[int64]*biz.User
-		err        error
-	)
-	end := time.Now().UTC().Add(45 * time.Second)
-	for {
-		now := time.Now().UTC()
-		//fmt.Println(now, end)
-		if end.Before(now) {
-			break
-		}
-
-		withdraw, err = a.uuc.GetWithdrawPassOrRewardedFirst(ctx)
-		if nil == withdraw {
-			break
-		}
-
-		if "NANA" != withdraw.Type {
-			continue
-		}
-
-		userIdsMap = make(map[int64]int64, 0)
-		//for _, vWithdraws := range withdraws {
-		//	userIdsMap[vWithdraws.UserId] = vWithdraws.UserId
-		//}
-		userIdsMap[withdraw.UserId] = withdraw.UserId
-		for _, v := range userIdsMap {
-			userIds = append(userIds, v)
-		}
-
-		users, err = a.uuc.GetUserByUserIds(ctx, userIds...)
-		if nil != err {
-			return nil, err
-		}
-
-		if _, ok := users[withdraw.UserId]; !ok {
-			continue
-		}
-		_, err = a.uuc.UpdateWithdrawSuccess(ctx, withdraw.ID)
-		if nil != err {
-			fmt.Println("提现处理：", err)
-			continue
-		}
-		var amount string
-		// 定义精度为小数点后8位
-		const precision = 8
-
-		// 将浮点数转换为大浮点数
-		bigFloat := new(big.Float).SetPrec(256).SetFloat64(withdraw.RelAmountNew)
-
-		// 将大浮点数转换为字符串表示形式，保留精度
-		floatStr := bigFloat.Text('f', precision)
-
-		// 分割整数和小数部分
-		parts := strings.Split(floatStr, ".")
-
-		// 确保小数部分非空
-		if len(parts) == 1 {
-			parts = append(parts, "")
-		}
-
-		// 组合整数和小数部分，并添加适当的零
-		intStr := parts[0] + parts[1] + strings.Repeat("0", precision-len(parts[1]))
-
-		// 移除前导零，保留至少一个零
-		intStr = strings.TrimLeft(intStr, "0")
-		if len(intStr) == 0 {
-			continue
-		}
-		amount = intStr
-		var (
-			msg  string
-			code string
-			res  bool
-		)
-
-		time.Sleep(8 * time.Second)
-		res, msg, code, err = sendTransactionBiw(ctx, "", users[withdraw.UserId].Address, amount)
-		if !res || nil != err {
-			fmt.Println(res, msg, code, withdraw)
-			continue
-		}
-	}
+	//var (
+	//	withdraw *biz.Withdraw
+	//	//trade        *biz.Trade
+	//	userIds    []int64
+	//	userIdsMap map[int64]int64
+	//	users      map[int64]*biz.User
+	//	err        error
+	//)
+	//end := time.Now().UTC().Add(45 * time.Second)
+	//for {
+	//	now := time.Now().UTC()
+	//	//fmt.Println(now, end)
+	//	if end.Before(now) {
+	//		break
+	//	}
+	//
+	//	withdraw, err = a.uuc.GetWithdrawPassOrRewardedFirst(ctx)
+	//	if nil == withdraw {
+	//		break
+	//	}
+	//
+	//	if "NANA" != withdraw.Type {
+	//		continue
+	//	}
+	//
+	//	userIdsMap = make(map[int64]int64, 0)
+	//	//for _, vWithdraws := range withdraws {
+	//	//	userIdsMap[vWithdraws.UserId] = vWithdraws.UserId
+	//	//}
+	//	userIdsMap[withdraw.UserId] = withdraw.UserId
+	//	for _, v := range userIdsMap {
+	//		userIds = append(userIds, v)
+	//	}
+	//
+	//	users, err = a.uuc.GetUserByUserIds(ctx, userIds...)
+	//	if nil != err {
+	//		return nil, err
+	//	}
+	//
+	//	if _, ok := users[withdraw.UserId]; !ok {
+	//		continue
+	//	}
+	//	_, err = a.uuc.UpdateWithdrawSuccess(ctx, withdraw.ID)
+	//	if nil != err {
+	//		fmt.Println("提现处理：", err)
+	//		continue
+	//	}
+	//	var amount string
+	//	// 定义精度为小数点后8位
+	//	const precision = 8
+	//
+	//	// 将浮点数转换为大浮点数
+	//	bigFloat := new(big.Float).SetPrec(256).SetFloat64(withdraw.RelAmountNew)
+	//
+	//	// 将大浮点数转换为字符串表示形式，保留精度
+	//	floatStr := bigFloat.Text('f', precision)
+	//
+	//	// 分割整数和小数部分
+	//	parts := strings.Split(floatStr, ".")
+	//
+	//	// 确保小数部分非空
+	//	if len(parts) == 1 {
+	//		parts = append(parts, "")
+	//	}
+	//
+	//	// 组合整数和小数部分，并添加适当的零
+	//	intStr := parts[0] + parts[1] + strings.Repeat("0", precision-len(parts[1]))
+	//
+	//	// 移除前导零，保留至少一个零
+	//	intStr = strings.TrimLeft(intStr, "0")
+	//	if len(intStr) == 0 {
+	//		continue
+	//	}
+	//	amount = intStr
+	//	var (
+	//		msg  string
+	//		code string
+	//		res  bool
+	//	)
+	//
+	//	time.Sleep(8 * time.Second)
+	//	res, msg, code, err = sendTransactionBiw(ctx, "", users[withdraw.UserId].Address, amount)
+	//	if !res || nil != err {
+	//		fmt.Println(res, msg, code, withdraw)
+	//		continue
+	//	}
+	//}
 
 	return &v1.AdminWithdrawEthReply{}, nil
 }
 
-var sdkClient = sdk.NewBCFWalletSDK()
-var bCFSignUtil = sdkClient.NewBCFSignUtil("b")
-var wallet = sdkClient.NewBCFWallet("35.213.66.234", 30003, "https://tracker.biw-meta.info/browser")
-
-func sendTransactionBiw(ctx context.Context, secret string, toAddr string, toAmount string) (bool, string, string, error) {
-	bCFSignUtilCreateKeypair, _ := bCFSignUtil.CreateKeypair(secret)
-
-	reqCreateTransferAsset := createTransferAsset.TransferAssetTransactionParams{
-		TransactionCommonParamsWithRecipientId: createTransferAsset.TransactionCommonParamsWithRecipientId{
-			TransactionCommonParams: createTransferAsset.TransactionCommonParams{
-				PublicKey:        bCFSignUtilCreateKeypair.PublicKey,
-				Fee:              "5000",
-				ApplyBlockHeight: wallet.GetLastBlock().Result.Height,
-			},
-			RecipientId: toAddr, //钱包地址
-		},
-		Amount:    toAmount,
-		AssetType: "NANA",
-	}
-
-	createTransferAssetResp, _ := wallet.CreateTransferAsset(reqCreateTransferAsset)
-	if !createTransferAssetResp.Success {
-		return false, "错误", "错误", nil
-	}
-
-	//// 3.3 生成签名
-	detachedSign, _ := bCFSignUtil.DetachedSign(createTransferAssetResp.Result.Buffer.StringBuffer, bCFSignUtilCreateKeypair.SecretKey.StringBuffer)
-
-	//// 3.4 bugWallet.BroadcastTransferAsset()
-	req1 := broadcastTra.BroadcastTransactionParams{
-		Signature: detachedSign,
-		Buffer:    createTransferAssetResp.Result.Buffer, //3.2 上面取得的buffer
-		IsOnChain: true,
-	}
-
-	broadcastResult, err := wallet.BroadcastTransferAsset(req1)
-	success := broadcastResult.Success
-
-	return success, broadcastResult.Error.Message, broadcastResult.Error.Code, err
-}
+//
+//var sdkClient = sdk.NewBCFWalletSDK()
+//var bCFSignUtil = sdkClient.NewBCFSignUtil("b")
+//var wallet = sdkClient.NewBCFWallet("35.213.66.234", 30003, "https://tracker.biw-meta.info/browser")
+//
+//func sendTransactionBiw(ctx context.Context, secret string, toAddr string, toAmount string) (bool, string, string, error) {
+//	bCFSignUtilCreateKeypair, _ := bCFSignUtil.CreateKeypair(secret)
+//
+//	reqCreateTransferAsset := createTransferAsset.TransferAssetTransactionParams{
+//		TransactionCommonParamsWithRecipientId: createTransferAsset.TransactionCommonParamsWithRecipientId{
+//			TransactionCommonParams: createTransferAsset.TransactionCommonParams{
+//				PublicKey:        bCFSignUtilCreateKeypair.PublicKey,
+//				Fee:              "5000",
+//				ApplyBlockHeight: wallet.GetLastBlock().Result.Height,
+//			},
+//			RecipientId: toAddr, //钱包地址
+//		},
+//		Amount:    toAmount,
+//		AssetType: "NANA",
+//	}
+//
+//	createTransferAssetResp, _ := wallet.CreateTransferAsset(reqCreateTransferAsset)
+//	if !createTransferAssetResp.Success {
+//		return false, "错误", "错误", nil
+//	}
+//
+//	//// 3.3 生成签名
+//	detachedSign, _ := bCFSignUtil.DetachedSign(createTransferAssetResp.Result.Buffer.StringBuffer, bCFSignUtilCreateKeypair.SecretKey.StringBuffer)
+//
+//	//// 3.4 bugWallet.BroadcastTransferAsset()
+//	req1 := broadcastTra.BroadcastTransactionParams{
+//		Signature: detachedSign,
+//		Buffer:    createTransferAssetResp.Result.Buffer, //3.2 上面取得的buffer
+//		IsOnChain: true,
+//	}
+//
+//	broadcastResult, err := wallet.BroadcastTransferAsset(req1)
+//	success := broadcastResult.Success
+//
+//	return success, broadcastResult.Error.Message, broadcastResult.Error.Code, err
+//}
 
 func (a *AppService) AdminWithdrawEth(ctx context.Context, req *v1.AdminWithdrawEthRequest) (*v1.AdminWithdrawEthReply, error) {
 	var (
@@ -2497,6 +2621,8 @@ func (a *AppService) AdminWithdrawEth(ctx context.Context, req *v1.AdminWithdraw
 
 		if "USDT" == withdraw.Type {
 			tokenAddress = "0x55d398326f99059fF775485246999027B3197955"
+		} else if "NANA" == withdraw.Type {
+			tokenAddress = "0xfe1D819E4c2BA30dc84B42C0277563d0eE341b9D"
 		} else {
 			continue
 		}
@@ -2697,17 +2823,67 @@ func getUserLength(address string) (int64, error) {
 	return balInt, nil
 }
 
+func getUserLength2(address string) (int64, error) {
+	url1 := "https://bsc-dataseed4.binance.org/"
+
+	var balInt int64
+	for i := 0; i < 5; i++ {
+		if 1 == i {
+			url1 = "https://binance.llamarpc.com/"
+		} else if 2 == i {
+			url1 = "https://bscrpc.com/"
+		} else if 3 == i {
+			url1 = "https://bsc-pokt.nodies.app/"
+		} else if 4 == i {
+			url1 = "https://data-seed-prebsc-1-s3.binance.org:8545/"
+		}
+
+		client, err := ethclient.Dial(url1)
+		if err != nil {
+			fmt.Println(nil, err)
+			continue
+		}
+
+		tokenAddress := common.HexToAddress(address)
+		instance, err := NewBuySomething(tokenAddress, client)
+		if err != nil {
+			fmt.Println(nil, err)
+			continue
+		}
+
+		bals, err := instance.GetUserSuperLength(&bind.CallOpts{})
+		if err != nil {
+			fmt.Println(err)
+			//url1 = "https://bsc-dataseed4.binance.org"
+			continue
+		}
+
+		balInt = bals.Int64()
+		break
+	}
+
+	return balInt, nil
+}
+
 type userDeposit struct {
+	Address   string
+	Amount    int64
+	AddressId int64
+	GoodId    int64
+}
+
+type userDepositS struct {
 	Address string
-	Amount  int64
 }
 
 func getUserInfo(start int64, end int64, address string) ([]*userDeposit, error) {
 	url1 := "https://bsc-dataseed4.binance.org/"
 
 	var (
-		bals  []common.Address
-		bals2 []*big.Int
+		bals          []common.Address
+		bals2         []*big.Int
+		balsGoodId    []*big.Int
+		balsAddressId []*big.Int
 	)
 	users := make([]*userDeposit, 0)
 
@@ -2779,15 +2955,137 @@ func getUserInfo(start int64, end int64, address string) ([]*userDeposit, error)
 		break
 	}
 
-	if len(bals) != len(bals2) {
-		fmt.Println("数量不一致，错误")
+	for i := 0; i < 5; i++ {
+		if 1 == i {
+			url1 = "https://binance.llamarpc.com/"
+		} else if 2 == i {
+			url1 = "https://bscrpc.com/"
+		} else if 3 == i {
+			url1 = "https://bsc-pokt.nodies.app/"
+		} else if 4 == i {
+			url1 = "https://data-seed-prebsc-1-s3.binance.org:8545/"
+		}
+
+		client, err := ethclient.Dial(url1)
+		if err != nil {
+			fmt.Println(nil, err)
+			continue
+		}
+
+		tokenAddress := common.HexToAddress(address)
+		instance, err := NewBuySomething(tokenAddress, client)
+		if err != nil {
+			fmt.Println(nil, err)
+			continue
+		}
+
+		balsGoodId, err = instance.GetGoodIdsByIndex(&bind.CallOpts{}, new(big.Int).SetInt64(start), new(big.Int).SetInt64(end))
+		if err != nil {
+			fmt.Println(err)
+			//url1 = "https://bsc-dataseed4.binance.org"
+			continue
+		}
+
+		break
+	}
+
+	for i := 0; i < 5; i++ {
+		if 1 == i {
+			url1 = "https://binance.llamarpc.com/"
+		} else if 2 == i {
+			url1 = "https://bscrpc.com/"
+		} else if 3 == i {
+			url1 = "https://bsc-pokt.nodies.app/"
+		} else if 4 == i {
+			url1 = "https://data-seed-prebsc-1-s3.binance.org:8545/"
+		}
+
+		client, err := ethclient.Dial(url1)
+		if err != nil {
+			fmt.Println(nil, err)
+			continue
+		}
+
+		tokenAddress := common.HexToAddress(address)
+		instance, err := NewBuySomething(tokenAddress, client)
+		if err != nil {
+			fmt.Println(nil, err)
+			continue
+		}
+
+		balsAddressId, err = instance.GetAddressIdsByIndex(&bind.CallOpts{}, new(big.Int).SetInt64(start), new(big.Int).SetInt64(end))
+		if err != nil {
+			fmt.Println(err)
+			//url1 = "https://bsc-dataseed4.binance.org"
+			continue
+		}
+
+		break
+	}
+
+	tmpAll := len(bals)
+	if tmpAll != len(bals2) || tmpAll != len(balsGoodId) || tmpAll != len(balsAddressId) {
+		fmt.Println("数量不一致，错误", tmpAll, len(bals2), len(balsGoodId), len(balsAddressId))
 		return users, nil
 	}
 
 	for k, v := range bals {
 		users = append(users, &userDeposit{
+			Address:   v.String(),
+			Amount:    bals2[k].Int64(),
+			GoodId:    balsGoodId[k].Int64(),
+			AddressId: balsAddressId[k].Int64(),
+		})
+	}
+
+	return users, nil
+}
+
+func getUserInfo2(start int64, end int64, address string) ([]*userDepositS, error) {
+	url1 := "https://bsc-dataseed4.binance.org/"
+
+	var (
+		bals []common.Address
+	)
+	users := make([]*userDepositS, 0)
+
+	for i := 0; i < 5; i++ {
+		if 1 == i {
+			url1 = "https://binance.llamarpc.com/"
+		} else if 2 == i {
+			url1 = "https://bscrpc.com/"
+		} else if 3 == i {
+			url1 = "https://bsc-pokt.nodies.app/"
+		} else if 4 == i {
+			url1 = "https://data-seed-prebsc-1-s3.binance.org:8545/"
+		}
+
+		client, err := ethclient.Dial(url1)
+		if err != nil {
+			fmt.Println(nil, err)
+			continue
+		}
+
+		tokenAddress := common.HexToAddress(address)
+		instance, err := NewBuySomething(tokenAddress, client)
+		if err != nil {
+			fmt.Println(nil, err)
+			continue
+		}
+
+		bals, err = instance.GetUsersSuperByIndex(&bind.CallOpts{}, new(big.Int).SetInt64(start), new(big.Int).SetInt64(end))
+		if err != nil {
+			fmt.Println(err)
+			//url1 = "https://bsc-dataseed4.binance.org"
+			continue
+		}
+
+		break
+	}
+
+	for _, v := range bals {
+		users = append(users, &userDepositS{
 			Address: v.String(),
-			Amount:  bals2[k].Int64(),
 		})
 	}
 

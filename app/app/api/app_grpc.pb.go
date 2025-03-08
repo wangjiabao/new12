@@ -27,6 +27,7 @@ const (
 	App_RecommendList_FullMethodName                        = "/api.App/RecommendList"
 	App_Withdraw_FullMethodName                             = "/api.App/Withdraw"
 	App_Deposit_FullMethodName                              = "/api.App/Deposit"
+	App_DepositSuper_FullMethodName                         = "/api.App/DepositSuper"
 	App_DepositWithdraw_FullMethodName                      = "/api.App/DepositWithdraw"
 	App_DepositBiw_FullMethodName                           = "/api.App/DepositBiw"
 	App_DepositWithdrawBiw_FullMethodName                   = "/api.App/DepositWithdrawBiw"
@@ -36,6 +37,8 @@ const (
 	App_VipCheck_FullMethodName                             = "/api.App/VipCheck"
 	App_Deposit2_FullMethodName                             = "/api.App/Deposit2"
 	App_AdminRewardList_FullMethodName                      = "/api.App/AdminRewardList"
+	App_AdminBuyList_FullMethodName                         = "/api.App/AdminBuyList"
+	App_AdminGoodList_FullMethodName                        = "/api.App/AdminGoodList"
 	App_AdminTradeList_FullMethodName                       = "/api.App/AdminTradeList"
 	App_LockSystem_FullMethodName                           = "/api.App/LockSystem"
 	App_AdminUserList_FullMethodName                        = "/api.App/AdminUserList"
@@ -85,6 +88,9 @@ const (
 	App_TestMoney_FullMethodName                            = "/api.App/TestMoney"
 	App_LockUser_FullMethodName                             = "/api.App/LockUser"
 	App_AdminRecommendLevelUpdate_FullMethodName            = "/api.App/AdminRecommendLevelUpdate"
+	App_AdminBuyUpdate_FullMethodName                       = "/api.App/AdminBuyUpdate"
+	App_AdminBuy_FullMethodName                             = "/api.App/AdminBuy"
+	App_AdminCreateGoods_FullMethodName                     = "/api.App/AdminCreateGoods"
 )
 
 // AppClient is the client API for App service.
@@ -99,6 +105,7 @@ type AppClient interface {
 	RecommendList(ctx context.Context, in *RecommendListRequest, opts ...grpc.CallOption) (*RecommendListReply, error)
 	Withdraw(ctx context.Context, in *WithdrawRequest, opts ...grpc.CallOption) (*WithdrawReply, error)
 	Deposit(ctx context.Context, in *DepositRequest, opts ...grpc.CallOption) (*DepositReply, error)
+	DepositSuper(ctx context.Context, in *DepositRequest, opts ...grpc.CallOption) (*DepositReply, error)
 	DepositWithdraw(ctx context.Context, in *DepositRequest, opts ...grpc.CallOption) (*DepositReply, error)
 	DepositBiw(ctx context.Context, in *DepositRequest, opts ...grpc.CallOption) (*DepositReply, error)
 	DepositWithdrawBiw(ctx context.Context, in *DepositRequest, opts ...grpc.CallOption) (*DepositReply, error)
@@ -108,6 +115,8 @@ type AppClient interface {
 	VipCheck(ctx context.Context, in *VipCheckRequest, opts ...grpc.CallOption) (*VipCheckReply, error)
 	Deposit2(ctx context.Context, in *DepositRequest, opts ...grpc.CallOption) (*DepositReply, error)
 	AdminRewardList(ctx context.Context, in *AdminRewardListRequest, opts ...grpc.CallOption) (*AdminRewardListReply, error)
+	AdminBuyList(ctx context.Context, in *AdminBuyListRequest, opts ...grpc.CallOption) (*AdminBuyListReply, error)
+	AdminGoodList(ctx context.Context, in *AdminGoodListRequest, opts ...grpc.CallOption) (*AdminGoodListReply, error)
 	AdminTradeList(ctx context.Context, in *AdminTradeListRequest, opts ...grpc.CallOption) (*AdminTradeListReply, error)
 	LockSystem(ctx context.Context, in *LockSystemRequest, opts ...grpc.CallOption) (*LockSystemReply, error)
 	AdminUserList(ctx context.Context, in *AdminUserListRequest, opts ...grpc.CallOption) (*AdminUserListReply, error)
@@ -157,6 +166,9 @@ type AppClient interface {
 	TestMoney(ctx context.Context, in *TestMoneyRequest, opts ...grpc.CallOption) (*TestMoneyReply, error)
 	LockUser(ctx context.Context, in *LockUserRequest, opts ...grpc.CallOption) (*LockUserReply, error)
 	AdminRecommendLevelUpdate(ctx context.Context, in *AdminRecommendLevelRequest, opts ...grpc.CallOption) (*AdminRecommendLevelReply, error)
+	AdminBuyUpdate(ctx context.Context, in *AdminBuyUpdateRequest, opts ...grpc.CallOption) (*AdminBuyUpdateReply, error)
+	AdminBuy(ctx context.Context, in *AdminBuyRequest, opts ...grpc.CallOption) (*AdminBuyReply, error)
+	AdminCreateGoods(ctx context.Context, in *AdminCreateGoodsRequest, opts ...grpc.CallOption) (*AdminCreateGoodsReply, error)
 }
 
 type appClient struct {
@@ -239,6 +251,15 @@ func (c *appClient) Deposit(ctx context.Context, in *DepositRequest, opts ...grp
 	return out, nil
 }
 
+func (c *appClient) DepositSuper(ctx context.Context, in *DepositRequest, opts ...grpc.CallOption) (*DepositReply, error) {
+	out := new(DepositReply)
+	err := c.cc.Invoke(ctx, App_DepositSuper_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *appClient) DepositWithdraw(ctx context.Context, in *DepositRequest, opts ...grpc.CallOption) (*DepositReply, error) {
 	out := new(DepositReply)
 	err := c.cc.Invoke(ctx, App_DepositWithdraw_FullMethodName, in, out, opts...)
@@ -314,6 +335,24 @@ func (c *appClient) Deposit2(ctx context.Context, in *DepositRequest, opts ...gr
 func (c *appClient) AdminRewardList(ctx context.Context, in *AdminRewardListRequest, opts ...grpc.CallOption) (*AdminRewardListReply, error) {
 	out := new(AdminRewardListReply)
 	err := c.cc.Invoke(ctx, App_AdminRewardList_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *appClient) AdminBuyList(ctx context.Context, in *AdminBuyListRequest, opts ...grpc.CallOption) (*AdminBuyListReply, error) {
+	out := new(AdminBuyListReply)
+	err := c.cc.Invoke(ctx, App_AdminBuyList_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *appClient) AdminGoodList(ctx context.Context, in *AdminGoodListRequest, opts ...grpc.CallOption) (*AdminGoodListReply, error) {
+	out := new(AdminGoodListReply)
+	err := c.cc.Invoke(ctx, App_AdminGoodList_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -761,6 +800,33 @@ func (c *appClient) AdminRecommendLevelUpdate(ctx context.Context, in *AdminReco
 	return out, nil
 }
 
+func (c *appClient) AdminBuyUpdate(ctx context.Context, in *AdminBuyUpdateRequest, opts ...grpc.CallOption) (*AdminBuyUpdateReply, error) {
+	out := new(AdminBuyUpdateReply)
+	err := c.cc.Invoke(ctx, App_AdminBuyUpdate_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *appClient) AdminBuy(ctx context.Context, in *AdminBuyRequest, opts ...grpc.CallOption) (*AdminBuyReply, error) {
+	out := new(AdminBuyReply)
+	err := c.cc.Invoke(ctx, App_AdminBuy_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *appClient) AdminCreateGoods(ctx context.Context, in *AdminCreateGoodsRequest, opts ...grpc.CallOption) (*AdminCreateGoodsReply, error) {
+	out := new(AdminCreateGoodsReply)
+	err := c.cc.Invoke(ctx, App_AdminCreateGoods_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AppServer is the server API for App service.
 // All implementations must embed UnimplementedAppServer
 // for forward compatibility
@@ -773,6 +839,7 @@ type AppServer interface {
 	RecommendList(context.Context, *RecommendListRequest) (*RecommendListReply, error)
 	Withdraw(context.Context, *WithdrawRequest) (*WithdrawReply, error)
 	Deposit(context.Context, *DepositRequest) (*DepositReply, error)
+	DepositSuper(context.Context, *DepositRequest) (*DepositReply, error)
 	DepositWithdraw(context.Context, *DepositRequest) (*DepositReply, error)
 	DepositBiw(context.Context, *DepositRequest) (*DepositReply, error)
 	DepositWithdrawBiw(context.Context, *DepositRequest) (*DepositReply, error)
@@ -782,6 +849,8 @@ type AppServer interface {
 	VipCheck(context.Context, *VipCheckRequest) (*VipCheckReply, error)
 	Deposit2(context.Context, *DepositRequest) (*DepositReply, error)
 	AdminRewardList(context.Context, *AdminRewardListRequest) (*AdminRewardListReply, error)
+	AdminBuyList(context.Context, *AdminBuyListRequest) (*AdminBuyListReply, error)
+	AdminGoodList(context.Context, *AdminGoodListRequest) (*AdminGoodListReply, error)
 	AdminTradeList(context.Context, *AdminTradeListRequest) (*AdminTradeListReply, error)
 	LockSystem(context.Context, *LockSystemRequest) (*LockSystemReply, error)
 	AdminUserList(context.Context, *AdminUserListRequest) (*AdminUserListReply, error)
@@ -831,6 +900,9 @@ type AppServer interface {
 	TestMoney(context.Context, *TestMoneyRequest) (*TestMoneyReply, error)
 	LockUser(context.Context, *LockUserRequest) (*LockUserReply, error)
 	AdminRecommendLevelUpdate(context.Context, *AdminRecommendLevelRequest) (*AdminRecommendLevelReply, error)
+	AdminBuyUpdate(context.Context, *AdminBuyUpdateRequest) (*AdminBuyUpdateReply, error)
+	AdminBuy(context.Context, *AdminBuyRequest) (*AdminBuyReply, error)
+	AdminCreateGoods(context.Context, *AdminCreateGoodsRequest) (*AdminCreateGoodsReply, error)
 	mustEmbedUnimplementedAppServer()
 }
 
@@ -862,6 +934,9 @@ func (UnimplementedAppServer) Withdraw(context.Context, *WithdrawRequest) (*With
 func (UnimplementedAppServer) Deposit(context.Context, *DepositRequest) (*DepositReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Deposit not implemented")
 }
+func (UnimplementedAppServer) DepositSuper(context.Context, *DepositRequest) (*DepositReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DepositSuper not implemented")
+}
 func (UnimplementedAppServer) DepositWithdraw(context.Context, *DepositRequest) (*DepositReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DepositWithdraw not implemented")
 }
@@ -888,6 +963,12 @@ func (UnimplementedAppServer) Deposit2(context.Context, *DepositRequest) (*Depos
 }
 func (UnimplementedAppServer) AdminRewardList(context.Context, *AdminRewardListRequest) (*AdminRewardListReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AdminRewardList not implemented")
+}
+func (UnimplementedAppServer) AdminBuyList(context.Context, *AdminBuyListRequest) (*AdminBuyListReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AdminBuyList not implemented")
+}
+func (UnimplementedAppServer) AdminGoodList(context.Context, *AdminGoodListRequest) (*AdminGoodListReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AdminGoodList not implemented")
 }
 func (UnimplementedAppServer) AdminTradeList(context.Context, *AdminTradeListRequest) (*AdminTradeListReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AdminTradeList not implemented")
@@ -1035,6 +1116,15 @@ func (UnimplementedAppServer) LockUser(context.Context, *LockUserRequest) (*Lock
 }
 func (UnimplementedAppServer) AdminRecommendLevelUpdate(context.Context, *AdminRecommendLevelRequest) (*AdminRecommendLevelReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AdminRecommendLevelUpdate not implemented")
+}
+func (UnimplementedAppServer) AdminBuyUpdate(context.Context, *AdminBuyUpdateRequest) (*AdminBuyUpdateReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AdminBuyUpdate not implemented")
+}
+func (UnimplementedAppServer) AdminBuy(context.Context, *AdminBuyRequest) (*AdminBuyReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AdminBuy not implemented")
+}
+func (UnimplementedAppServer) AdminCreateGoods(context.Context, *AdminCreateGoodsRequest) (*AdminCreateGoodsReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AdminCreateGoods not implemented")
 }
 func (UnimplementedAppServer) mustEmbedUnimplementedAppServer() {}
 
@@ -1189,6 +1279,24 @@ func _App_Deposit_Handler(srv interface{}, ctx context.Context, dec func(interfa
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AppServer).Deposit(ctx, req.(*DepositRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _App_DepositSuper_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DepositRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AppServer).DepositSuper(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: App_DepositSuper_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AppServer).DepositSuper(ctx, req.(*DepositRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1351,6 +1459,42 @@ func _App_AdminRewardList_Handler(srv interface{}, ctx context.Context, dec func
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AppServer).AdminRewardList(ctx, req.(*AdminRewardListRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _App_AdminBuyList_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AdminBuyListRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AppServer).AdminBuyList(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: App_AdminBuyList_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AppServer).AdminBuyList(ctx, req.(*AdminBuyListRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _App_AdminGoodList_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AdminGoodListRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AppServer).AdminGoodList(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: App_AdminGoodList_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AppServer).AdminGoodList(ctx, req.(*AdminGoodListRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -2237,6 +2381,60 @@ func _App_AdminRecommendLevelUpdate_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _App_AdminBuyUpdate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AdminBuyUpdateRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AppServer).AdminBuyUpdate(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: App_AdminBuyUpdate_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AppServer).AdminBuyUpdate(ctx, req.(*AdminBuyUpdateRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _App_AdminBuy_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AdminBuyRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AppServer).AdminBuy(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: App_AdminBuy_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AppServer).AdminBuy(ctx, req.(*AdminBuyRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _App_AdminCreateGoods_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AdminCreateGoodsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AppServer).AdminCreateGoods(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: App_AdminCreateGoods_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AppServer).AdminCreateGoods(ctx, req.(*AdminCreateGoodsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // App_ServiceDesc is the grpc.ServiceDesc for App service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -2277,6 +2475,10 @@ var App_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _App_Deposit_Handler,
 		},
 		{
+			MethodName: "DepositSuper",
+			Handler:    _App_DepositSuper_Handler,
+		},
+		{
 			MethodName: "DepositWithdraw",
 			Handler:    _App_DepositWithdraw_Handler,
 		},
@@ -2311,6 +2513,14 @@ var App_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "AdminRewardList",
 			Handler:    _App_AdminRewardList_Handler,
+		},
+		{
+			MethodName: "AdminBuyList",
+			Handler:    _App_AdminBuyList_Handler,
+		},
+		{
+			MethodName: "AdminGoodList",
+			Handler:    _App_AdminGoodList_Handler,
 		},
 		{
 			MethodName: "AdminTradeList",
@@ -2507,6 +2717,18 @@ var App_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "AdminRecommendLevelUpdate",
 			Handler:    _App_AdminRecommendLevelUpdate_Handler,
+		},
+		{
+			MethodName: "AdminBuyUpdate",
+			Handler:    _App_AdminBuyUpdate_Handler,
+		},
+		{
+			MethodName: "AdminBuy",
+			Handler:    _App_AdminBuy_Handler,
+		},
+		{
+			MethodName: "AdminCreateGoods",
+			Handler:    _App_AdminCreateGoods_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
